@@ -1,7 +1,7 @@
 /**
  * @file src/features/video-subtitle/content/youtubeTimedTextMessage.ts
  * 文件职责：校验 isolated world 收到的 YouTube timedtext 桥消息，只把当前视频的有界字幕数据交给播放器运行时。
- * 主要内容：复验消息协议、页面与请求 URL、当前 videoId、响应体积、cue 数量和单条文本长度，并输出规范化字幕时间轴。
+ * 主要内容：复验消息协议、页面与请求 URL（HTTPS、无凭据/自定义端口、YouTube 主机和精确 timedtext 路径）、当前 videoId、响应体积、cue 数量和单条文本长度，并输出规范化字幕时间轴。
  * 模块边界：本文件不监听 window 消息、不缓存字幕也不操作播放器 DOM；MAIN world 只负责采集，content runtime 负责事件来源校验和消费结果。
  */
 import {
@@ -10,12 +10,8 @@ import {
     parseYoutubeTimedTextResponse,
     type VideoSubtitleCue,
 } from './youtubeSubtitleData';
-import {
-    isYoutubeTimedTextUrl,
-    YOUTUBE_TIMED_TEXT_MESSAGE,
-} from './youtubeTimedTextBridgeCore';
-
-const YOUTUBE_HOST_PATTERN = /(^|\.)youtube\.com$/i;
+import {YOUTUBE_TIMED_TEXT_MESSAGE} from './youtubeTimedTextBridgeCore';
+import {isYoutubeHostname, parseYoutubeTimedTextUrl} from './youtubeTimedTextUrl';
 
 export interface YoutubeTimedTextMessageLimits {
     maxPayloadChars: number;
@@ -35,7 +31,7 @@ export interface ValidatedYoutubeTimedTextMessage {
 }
 
 function isYoutubeVideoUrl(url: URL): boolean {
-    return YOUTUBE_HOST_PATTERN.test(url.hostname)
+    return isYoutubeHostname(url.hostname)
         && (url.pathname === '/watch' || url.pathname.startsWith('/shorts/'));
 }
 
@@ -56,13 +52,14 @@ export function validateYoutubeTimedTextMessage(
         if (!payload.responseText || payload.responseText.length > limits.maxPayloadChars) return null;
 
         const pageUrl = new URL(pageHref);
-        if (!isYoutubeVideoUrl(pageUrl) || !isYoutubeTimedTextUrl(payload.url, pageHref)) return null;
+        if (!isYoutubeVideoUrl(pageUrl)) return null;
+        const requestUrl = parseYoutubeTimedTextUrl(payload.url, pageHref);
+        if (!requestUrl) return null;
         const currentVideoId = getYoutubeVideoId({
             hostname: pageUrl.hostname,
             pathname: pageUrl.pathname,
             search: pageUrl.search,
         });
-        const requestUrl = new URL(payload.url, pageHref);
         if (!currentVideoId || requestUrl.searchParams.get('v') !== currentVideoId) return null;
 
         const cues = finalizeVideoSubtitleCues(parseYoutubeTimedTextResponse(payload.responseText));

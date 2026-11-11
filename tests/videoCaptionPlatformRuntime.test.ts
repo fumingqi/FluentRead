@@ -367,7 +367,8 @@ function videoFixture(url: string, translate?: Mock) {
     const f = fixture(url, `<div class="video-player"><video src="one.mp4"></video><span data-purpose="captions-cue-text">${sentence}</span></div>`, translate);
     const video = f.document.querySelector('video')! as unknown as HTMLVideoElement;
     video.getBoundingClientRect = () => ({left: 50, top: 50, width: 800, height: 450}) as DOMRect;
-    Object.assign(video, {currentTime: 1, paused: true, ended: false, seeking: false});
+    // 正常播放时周期同步运行；暂停休眠由独立用例显式覆盖。
+    Object.assign(video, {currentTime: 1, paused: false, ended: false, seeking: false});
     const source = {kind: 'subtitles', language: 'en', label: 'English', mode: 'showing', cues: [{startTime: 0, endTime: 2, text: sentence}]} as unknown as TextTrack;
     const target = {kind: 'subtitles', language: 'zh-CN', label: 'Chinese', mode: 'disabled', cues: [{startTime: 0, endTime: 2, text: '人工字幕'}]} as unknown as TextTrack;
     Object.defineProperty(video, 'textTracks', {value: [source, target], configurable: true});
@@ -444,10 +445,58 @@ describe('Udemy 与 Disney+ 原生人工字幕', () => {
     });
 });
 
+describe('平台字幕定时器休眠', () => {
+    it('页面隐藏、功能关闭或视频暂停时停止 250ms 同步，恢复后继续', async () => {
+        const f = videoFixture('https://www.udemy.com/course/demo/learn/');
+        Object.defineProperty(f.video, 'textTracks', {value: []});
+        const measure = vi.fn(f.video.getBoundingClientRect);
+        f.video.getBoundingClientRect = measure;
+        let visibility: DocumentVisibilityState = 'visible';
+        Object.defineProperty(f.document, 'visibilityState', {configurable: true, get: () => visibility});
+        const changeVisibility = (next: DocumentVisibilityState) => {
+            visibility = next;
+            f.document.dispatchEvent(new f.window.Event('visibilitychange'));
+        };
+        const setPaused = (paused: boolean) => {
+            Object.assign(f.video, {paused});
+            f.document.dispatchEvent(new f.window.Event(paused ? 'pause' : 'play'));
+        };
+        f.start(); await vi.advanceTimersByTimeAsync(100);
+        measure.mockClear(); await vi.advanceTimersByTimeAsync(1000);
+        expect(measure).toHaveBeenCalledTimes(4);
+
+        setPaused(true); await vi.advanceTimersByTimeAsync(100);
+        measure.mockClear(); await vi.advanceTimersByTimeAsync(1000);
+        expect(measure).not.toHaveBeenCalled();
+
+        setPaused(false); await vi.advanceTimersByTimeAsync(100);
+        measure.mockClear(); await vi.advanceTimersByTimeAsync(1000);
+        expect(measure).toHaveBeenCalledTimes(4);
+
+        changeVisibility('hidden'); await vi.advanceTimersByTimeAsync(100);
+        measure.mockClear(); await vi.advanceTimersByTimeAsync(1000);
+        expect(measure).not.toHaveBeenCalled();
+
+        changeVisibility('visible'); await vi.advanceTimersByTimeAsync(100);
+        measure.mockClear(); await vi.advanceTimersByTimeAsync(1000);
+        expect(measure).toHaveBeenCalledTimes(4);
+
+        f.config.videoTranslationEnabled = false; f.change(); await vi.advanceTimersByTimeAsync(100);
+        measure.mockClear(); await vi.advanceTimersByTimeAsync(1000);
+        expect(measure).not.toHaveBeenCalled();
+
+        f.config.videoTranslationEnabled = true; f.change(); await vi.advanceTimersByTimeAsync(100);
+        measure.mockClear(); await vi.advanceTimersByTimeAsync(1000);
+        expect(measure).toHaveBeenCalledTimes(4);
+    });
+});
+
 describe('平台字幕布局操作预算与失效边界', () => {
     it('64 个视频每轮各测量一次，优先播放中视频且复用所选尺寸定位字幕', async () => {
         const f = videoFixture('https://www.udemy.com/course/demo/learn/');
         Object.defineProperty(f.video, 'textTracks', {value: []});
+        // 主视频暂停，验证优先选择真正播放中的推荐视频字幕。
+        Object.assign(f.video, {paused: true});
         const measurements = [vi.fn(() => ({left: 50, top: 50, width: 2000, height: 1200}) as DOMRect)];
         f.video.getBoundingClientRect = measurements[0];
         for (let index = 1; index < 64; index += 1) {

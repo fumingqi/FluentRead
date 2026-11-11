@@ -170,19 +170,62 @@ describe('YouTube 字幕轨道数据', () => {
     expect(url).toContain('cplayer=UNIPLAYER');
   });
 
+  it('拒绝恶意 timedtext baseUrl，提取和构造 URL 都在请求前 fail closed', () => {
+    const valid = 'https://www.youtube.com/api/timedtext?v=video-1&lang=en';
+    const malicious = [
+      'http://www.youtube.com/api/timedtext?v=video-1&lang=en',
+      'javascript:alert(1)//',
+      'data:text/plain,subtitle',
+      'https://evil.example/api/timedtext?v=video-1&lang=en',
+      'https://www.youtube.com.evil.example/api/timedtext?v=video-1&lang=en',
+      'https://evil-youtube.com/api/timedtext?v=video-1&lang=en',
+      'https://notyoutube.com/api/timedtext?v=video-1&lang=en',
+      'https://www.youtube.com./api/timedtext?v=video-1&lang=en',
+      'https://www.youtube.com@evil.example/api/timedtext?v=video-1&lang=en',
+      'https://user:pass@www.youtube.com/api/timedtext?v=video-1&lang=en',
+      'https://:pass@www.youtube.com/api/timedtext?v=video-1&lang=en',
+      'https://www.youtube.com:8443/api/timedtext?v=video-1&lang=en',
+      'https://www.youtube.com/api/timedtext/extra?v=video-1&lang=en',
+      'https://www.youtube.com/api/timedtext-evil?v=video-1&lang=en',
+      'https://www.youtube.com/watch?v=video-1&lang=en',
+      'http://[::1/api/timedtext?v=video-1&lang=en',
+    ];
+
+    malicious.forEach((baseUrl) => {
+      expect(buildYoutubeTimedTextUrl({baseUrl, languageCode: 'en'}), baseUrl).toBeNull();
+    });
+    expect(buildYoutubeTimedTextUrl({baseUrl: valid, languageCode: 'en'})).not.toBeNull();
+
+    const root = {
+      querySelectorAll: () => [{
+        textContent: `var ytInitialPlayerResponse = ${JSON.stringify({
+          videoDetails: {videoId: 'video-1'},
+          captions: {playerCaptionsTracklistRenderer: {captionTracks: [
+            {baseUrl: malicious[3], languageCode: 'en'},
+            {baseUrl: malicious[11], languageCode: 'ja'},
+            {baseUrl: valid, languageCode: 'en'},
+          ]}},
+        })};`,
+      }],
+    } as unknown as ParentNode;
+    expect(extractYoutubeCaptionTracks(root, 'video-1')).toEqual([
+      expect.objectContaining({baseUrl: valid, languageCode: 'en'}),
+    ]);
+  });
+
   it('对异常 YouTube 初始化脚本和轨道选择输入安全降级', () => {
     const root = {
       querySelectorAll: () => [
         { textContent: 'var unrelated = true;' },
         { textContent: 'playerCaptionsTracklistRenderer ytInitialPlayerResponse = {"captions":' },
         { textContent: 'playerCaptionsTracklistRenderer ytInitialPlayerResponse = {"captions":};' },
-        { textContent: 'playerCaptionsTracklistRenderer ytInitialPlayerResponse = {"captions":{"playerCaptionsTracklistRenderer":{"captionTracks":[{"baseUrl":"","languageCode":"en"},{"baseUrl":"https://example.com/t","languageCode":""},{"baseUrl":"https://example.com/ok","languageCode":"ja","kind":4,"name":{"simpleText":7}}]}}};' },
+        { textContent: 'playerCaptionsTracklistRenderer ytInitialPlayerResponse = {"captions":{"playerCaptionsTracklistRenderer":{"captionTracks":[{"baseUrl":"","languageCode":"en"},{"baseUrl":"https://www.youtube.com/api/timedtext?lang=","languageCode":""},{"baseUrl":"https://www.youtube.com/api/timedtext?lang=ja","languageCode":"ja","kind":4,"name":{"simpleText":7}}]}}};' },
       ],
     } as unknown as ParentNode;
 
     expect(extractYoutubeCaptionTracks({querySelectorAll: () => []} as unknown as ParentNode)).toEqual([]);
     expect(extractYoutubeCaptionTracks(root)).toEqual([{
-      baseUrl: 'https://example.com/ok',
+      baseUrl: 'https://www.youtube.com/api/timedtext?lang=ja',
       languageCode: 'ja',
       kind: undefined,
       name: undefined,
@@ -202,7 +245,7 @@ describe('YouTube 字幕轨道数据', () => {
       captions: {
         playerCaptionsTracklistRenderer: {
           captionTracks: [{
-            baseUrl: 'https://example.com/timedtext?value=\\path',
+            baseUrl: 'https://www.youtube.com/api/timedtext?value=\\path',
             languageCode: 'en',
             name: {simpleText: 'A "quoted" track'},
           }],

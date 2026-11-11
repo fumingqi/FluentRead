@@ -1,7 +1,7 @@
 /**
  * @file src/features/video-subtitle/content/runtime.ts
  * 文件职责：装配视频及会议字幕运行时，并协调 YouTube/X 原生字幕、目标语言人工轨、逐条翻译、校时、菜单、完整句学习与下载；菜单关闭字幕时保留播放器入口，设置中心关闭功能时移除入口；独立管理 YouTube 播放器的原生字幕隐藏所有权，切句不释放，切模式、离开与卸载时恢复。
- * 主要内容：挂载原句学习与独立本地读音控制器，原文变化立即作废旧读音，字幕隐藏或关闭取消请求；读音开关复用既有配置与菜单并保持仅译文模式语义，说明与下载可独立展开，Escape 逐层关闭且菜单关闭重置临时展开状态；双语顺序复用现有外观配置即时保存与重排，不重发翻译；显示模式变化重新授予同句翻译资格并复用已有缓存，不混入字幕原文及导出；媒体切换和配置变化取消有界字幕预取并清理控制，协调字幕校时、预翻译与补译导出确认，并为可选逐字高亮提供当前句时间；X 分片加载尊重原生轨道优先级和原译文成对显示，播放器内换模型保留取消焦点，完整 AI 识别提前展示稳定句，完成后才缓存和导出。
+ * 主要内容：挂载原句学习与独立本地读音控制器，原文变化立即作废旧读音，字幕隐藏或关闭取消请求；每秒 UI 同步、帧时钟和平台轮询按页面可见性、功能开关与播放状态休眠，恢复事件重新拉起；读音开关复用既有配置与菜单并保持仅译文模式语义，说明与下载可独立展开，Escape 逐层关闭且菜单关闭重置临时展开状态；双语顺序复用现有外观配置即时保存与重排，不重发翻译；显示模式变化重新授予同句翻译资格并复用已有缓存，不混入字幕原文及导出；媒体切换和配置变化取消有界字幕预取并清理控制，协调字幕校时、预翻译与补译导出确认，并为可选逐字高亮提供当前句时间；X 分片加载尊重原生轨道优先级和原译文成对显示，播放器内换模型保留取消焦点，完整 AI 识别提前展示稳定句，完成后才缓存和导出。
  * 模块边界：本文件只在 content 页面编排，同视频底控的局部显隐订阅与字幕布局共用帧调度，帧内只校准已展开的菜单；关闭时保留入口状态，打开时一次同步内容、宿主和焦点；完整 AI 字幕缓存请求与提交身份由 subtitleSession 拥有，requestSession 将完整采集映射为后台单流的唯一请求代际；采集资源仍归 fullCapture，不拦截 fetch/XHR 也不实现翻译 provider，翻译经统一 service client。
  */
 import {createApp, h, shallowReactive} from 'vue';
@@ -496,6 +496,8 @@ export function mountVideoSubtitleTranslation(): () => void {
       if (!currentContainer || !currentSource || currentCueKey !== requestCueKey) return;
       lastSource = currentSource;
       renderProgressiveCaption(currentSource, overlay, currentContainer);
+      // 前置翻译完成后同步刷新原生全屏轨；暂停时不再依赖每秒轮询。
+      nativeFullscreen.sync();
     }).catch((error) => {
       if (!destroyed && requestGeneration === generation) {
         if (isXVideoPage()) { scheduleUpdate(); updatePlayerUiState(); }
@@ -612,6 +614,7 @@ export function mountVideoSubtitleTranslation(): () => void {
     const track = chooseYoutubeCaptionTrackForLocation(document, window.location, config.from);
     if (!track) return;
     const url = buildYoutubeTimedTextUrl(track);
+    if (!url) return;
     const key = getTimedTextCacheKey(url);
     if (key === pretranslationTrackKey && pretranslationCues.length > 0) return;
     if (pretranslationTrackRequest) return;
@@ -1007,6 +1010,8 @@ export function mountVideoSubtitleTranslation(): () => void {
     capturedSubtitleTracks.set(key, entry);
     if (canTranslateVideo()) {
       setPretranslationTrack(key, entry);
+      // 暂停时轮询已休眠，新捕获的轨道仍要立即重建原生全屏字幕轨。
+      nativeFullscreen.sync();
       scheduleUpdate();
     }
   };
@@ -1317,6 +1322,8 @@ export function mountVideoSubtitleTranslation(): () => void {
             if (isXVideoPage()) { renderSynchronizedXCaption(currentContainer, nextSource, result); continue; }
             if (!shown) continue;
             writeVideoCaptionText(nextOverlay, shown);
+            // 暂停时周期同步休眠，译文就绪后必须主动刷新原生全屏字幕轨。
+            nativeFullscreen.sync();
             syncTranslationOverlayPosition(currentContainer);
           } catch (error) {
             if (!destroyed && requestGeneration === generation) {
@@ -1358,6 +1365,7 @@ export function mountVideoSubtitleTranslation(): () => void {
       if (isXVideoPage()) renderSynchronizedXCaption(container, source, cached);
       pendingTranslationSource = '';
       pendingTranslationOverlay = null;
+      nativeFullscreen.sync();
       syncTranslationOverlayPosition(container);
       return;
     }
@@ -1558,11 +1566,14 @@ export function mountVideoSubtitleTranslation(): () => void {
     if (['loadedmetadata', 'seeked', 'play', 'ratechange'].includes(event.type)) ensurePretranslationTrack();
     schedulePretranslation(['loadedmetadata', 'seeked', 'play', 'ratechange'].includes(event.type));
     scheduleUpdate();
+    // play 恢复周期校正；pause/ended 让下一轮调度立即停表。
+    syncUiSyncTimer();
   };
 
   const handleVideoVisibilityChange = () => {
     if (document.visibilityState === 'hidden') {
       stopCaptionClock();
+      syncUiSyncTimer();
       return;
     }
     // Safari 可能挂起后台页的时钟；回来时重读媒体身份、cue、画幅及菜单位置。
@@ -1571,6 +1582,9 @@ export function mountVideoSubtitleTranslation(): () => void {
 
   };
   const handlePageShow = () => { syncPlayerUi(); scheduleSubtitleLayout(); };
+  // YouTube 与 X 都是 SPA；播放暂停时周期同步会休眠，站内导航仍需事件驱动地
+  // 重新判断当前页面是否还支持字幕，避免入口和原生字幕隐藏状态遗留在旧页面。
+  const handleVideoPageNavigation = () => { syncPlayerUi(); };
 
   const observeCaptionContainer = () => {
     const container = findCaptionContainer();
@@ -1609,6 +1623,26 @@ export function mountVideoSubtitleTranslation(): () => void {
     clearPretranslationState(false);
   };
 
+  // 周期校正只在真正需要时运行：页面隐藏、字幕功能关闭或媒体暂停/结束时停表，
+  // 避免后台标签和暂停播放器每秒唤醒一次 DOM 同步；恢复由可见性、配置和媒体事件重新拉起。
+  const shouldKeepUiSyncRunning = () => !destroyed
+    && document.visibilityState !== 'hidden'
+    && isSupportedVideoPage()
+    && config.on
+    && config.videoTranslationEnabled
+    && config.videoSubtitleVisible !== false
+    && observedVideo !== null
+    && !observedVideo.paused
+    && !observedVideo.ended;
+  const syncUiSyncTimer = () => {
+    if (shouldKeepUiSyncRunning()) {
+      if (uiSyncTimer === undefined) uiSyncTimer = window.setInterval(syncPlayerUi, 1000);
+      return;
+    }
+    if (uiSyncTimer !== undefined) window.clearInterval(uiSyncTimer);
+    uiSyncTimer = undefined;
+  };
+
   const syncPlayerUi = () => {
     if (destroyed) return;
     const nextVideoPageKey = getVideoPageKey();
@@ -1642,6 +1676,7 @@ export function mountVideoSubtitleTranslation(): () => void {
       menuElement = null;
       removeTranslationOverlay();
       nativeFullscreen.sync();
+      syncUiSyncTimer();
       return;
     }
     syncPretranslationConfig();
@@ -1662,6 +1697,7 @@ export function mountVideoSubtitleTranslation(): () => void {
     scheduleUpdate();
     schedulePretranslation();
     syncTranslationOverlayPosition(observedContainer);
+    syncUiSyncTimer();
   };
 
   playerBinding = createVideoPlayerBinding({
@@ -1679,13 +1715,14 @@ export function mountVideoSubtitleTranslation(): () => void {
   window.addEventListener('resize', scheduleSubtitleLayout);
   window.addEventListener('orientationchange', scheduleSubtitleLayout);
   window.addEventListener('pageshow', handlePageShow);
+  window.addEventListener('popstate', handleVideoPageNavigation);
+  window.addEventListener('yt-navigate-finish', handleVideoPageNavigation);
   window.visualViewport?.addEventListener('resize', scheduleSubtitleLayout);
   window.visualViewport?.addEventListener('scroll', scheduleSubtitleLayout);
   videoTimelineEventNames.forEach((eventName) => document.addEventListener(eventName, handleVideoTimelineEvent, true));
   window.addEventListener('message', handleTimedTextMessage);
   window.addEventListener('message', handleXSubtitleResourceMessage);
   syncPlayerUi();
-  uiSyncTimer = window.setInterval(syncPlayerUi, 1000);
 
   const unsubscribeConfig = subscribeConfig((nextConfig) => {
     reading.syncConfig(nextConfig);
@@ -1786,6 +1823,7 @@ export function mountVideoSubtitleTranslation(): () => void {
     xCaptionSource.restoreTracks();
     observedVideo = null;
     if (uiSyncTimer !== undefined) window.clearInterval(uiSyncTimer);
+    uiSyncTimer = undefined;
     captionObserver?.disconnect();
     subtitleLayout.destroy();
     unsubscribeConfig();
@@ -1796,6 +1834,8 @@ export function mountVideoSubtitleTranslation(): () => void {
     window.removeEventListener('resize', scheduleSubtitleLayout);
     window.removeEventListener('orientationchange', scheduleSubtitleLayout);
     window.removeEventListener('pageshow', handlePageShow);
+    window.removeEventListener('popstate', handleVideoPageNavigation);
+    window.removeEventListener('yt-navigate-finish', handleVideoPageNavigation);
     window.visualViewport?.removeEventListener('resize', scheduleSubtitleLayout);
     window.visualViewport?.removeEventListener('scroll', scheduleSubtitleLayout);
     videoTimelineEventNames.forEach((eventName) => document.removeEventListener(eventName, handleVideoTimelineEvent, true));

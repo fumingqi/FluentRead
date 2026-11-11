@@ -1,9 +1,13 @@
 /**
  * @file src/features/video-subtitle/content/youtubeTimedTextBridgeCore.ts
  * 文件职责：实现可注入、可测试的 YouTube timedtext 网络桥核心，安全包裹页面 fetch 与 XMLHttpRequest 并发布成功字幕响应，同时支持完整恢复。
- * 主要内容：定义环境端口、状态键和生命周期事件，识别目标 URL、构造 payload，保存原始方法，处理 XHR 复用/同步失败/迟到响应，克隆正文统一限制为 8MB 和 15 秒读取预算，并为显式开启的站点提供有界二进制文本适配与资源回放；卸载后不再克隆迟到响应。
+ * 主要内容：定义环境端口、状态键和生命周期事件，使用共享严格规则识别 YouTube timedtext URL、构造 payload，保存原始方法，处理 XHR 复用/同步失败/迟到响应，克隆正文统一限制为 8MB 和 15 秒读取预算，并为显式开启的站点提供有界二进制文本适配与资源回放；卸载后不再克隆迟到响应。
  * 模块边界：核心不直接引用全局 window、不解析字幕内容也不操作扩展 UI；页面适配器注入真实环境，video runtime 消费消息，所有猴补只属于 MAIN-world bridge 所有权。
  */
+import {isYoutubeTimedTextUrl} from './youtubeTimedTextUrl';
+
+export {isYoutubeTimedTextUrl} from './youtubeTimedTextUrl';
+
 export const YOUTUBE_TIMED_TEXT_MESSAGE = 'fluent-read-youtube-timedtext';
 export const YOUTUBE_BRIDGE_DISPOSE_EVENT = 'fluentread-youtube-bridge-dispose';
 export const YOUTUBE_BRIDGE_ENABLE_EVENT = 'fluentread-youtube-bridge-enable';
@@ -98,16 +102,6 @@ export function getYoutubeRequestUrl(input: unknown): string {
     const record = input as {href?: unknown; url?: unknown};
     if (typeof record.href === 'string') return record.href;
     return typeof record.url === 'string' ? record.url : '';
-}
-
-export function isYoutubeTimedTextUrl(value: string, baseHref: string): boolean {
-    try {
-        const url = new URL(value, baseHref);
-        return (url.hostname === 'youtube.com' || url.hostname.endsWith('.youtube.com'))
-            && url.pathname.includes('/api/timedtext');
-    } catch {
-        return false;
-    }
 }
 
 export function createYoutubeTimedTextPayload(

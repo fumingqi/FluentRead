@@ -125,6 +125,7 @@ export function createVideoSubtitleDownloads(ports: VideoDownloadPorts) {
         const youtube = chooseYoutubeCaptionTrackForLocation(ports.document, ports.location, ports.config.from);
         if (!youtube) throw new Error('当前视频没有可用的 YouTube 字幕轨道');
         const url = buildYoutubeTimedTextUrl(youtube);
+        if (!url) throw new Error('YouTube 字幕轨道地址无效，已停止请求');
         const text = await readVideoCaptionText(url, ports.request, {credentials: 'include', signal: requestController?.signal});
         const cues = finalizeVideoSubtitleCues(parseYoutubeTimedTextResponse(text));
         if (isDisposed() || requestController?.signal.aborted || controller !== requestController

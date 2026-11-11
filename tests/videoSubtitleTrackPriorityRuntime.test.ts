@@ -1809,6 +1809,7 @@ describe('public mounted YouTube native caption visibility ownership', () => {
     expect(f.player.classList.contains(hiddenClass)).toBe(false);
     expect(next.classList.contains(hiddenClass)).toBe(true);
     f.window.location.href = 'https://www.youtube.com/results?search_query=caption';
+    f.window.dispatchEvent(new f.window.Event('yt-navigate-finish'));
     await vi.advanceTimersByTimeAsync(1100);
     expect(next.classList.contains(hiddenClass)).toBe(false);
     dispose(); await settle(); expect(vi.getTimerCount()).toBe(0);
@@ -1861,6 +1862,9 @@ describe('public mounted YouTube nonfinite time and human track fallback', () =>
     expect(signals).toHaveLength(1);
     await vi.advanceTimersByTimeAsync(15_000);
     expect(signals[0].aborted).toBe(true);
+    // 暂停时周期同步休眠；恢复播放后由 play 事件重新拉起并按退避时间重试。
+    Object.defineProperty(f.video, 'paused', {configurable: true, writable: true, value: false});
+    f.emitVideo('play');
     await vi.advanceTimersByTimeAsync(6000);
     expect(signals).toHaveLength(2);
     const cancel = vi.fn(() => Promise.reject(new Error('late cancel failure')));
@@ -1948,6 +1952,51 @@ it('YouTube 同语言切换命名字幕轨时撤销旧翻译，签名刷新不�
   const second = tasks.at(-1)!; expect(second).not.toBe(first); expect(second.signal.aborted).toBe(false);
   first.resolve('Obsolete track translation'); second.resolve('Current track translation'); await vi.advanceTimersByTimeAsync(200);
   expect(f.displayed().translated).toBe('Current track translation');
+});
+
+it('页面隐藏、字幕关闭和视频暂停时停止 UI 轮询，恢复后重新启动', async () => {
+  const f = fixture(undefined, 'youtube');
+  let visibility: DocumentVisibilityState = 'visible';
+  Object.defineProperty(f.document, 'visibilityState', {configurable: true, get: () => visibility});
+  const setIntervalSpy = vi.spyOn(f.window, 'setInterval');
+  const clearIntervalSpy = vi.spyOn(f.window, 'clearInterval');
+  const uiTimerCalls = () => setIntervalSpy.mock.calls.filter(([, delay]) => delay === 1000).length;
+  const setPaused = (paused: boolean) => {
+    Object.defineProperty(f.video, 'paused', {configurable: true, writable: true, value: paused});
+  };
+  const dispose = f.start(); await settle();
+  // 测试播放器默认暂停：启动时不创建每秒轮询。
+  expect(uiTimerCalls()).toBe(0);
+
+  setPaused(false); f.emitVideo('play'); await settle();
+  expect(uiTimerCalls()).toBe(1);
+
+  clearIntervalSpy.mockClear();
+  setPaused(true); f.emitVideo('pause'); await settle();
+  expect(clearIntervalSpy).toHaveBeenCalled();
+
+  setPaused(false); f.emitVideo('play'); await settle();
+  expect(uiTimerCalls()).toBe(2);
+
+  clearIntervalSpy.mockClear();
+  visibility = 'hidden';
+  f.document.dispatchEvent(new f.window.Event('visibilitychange')); await settle();
+  expect(clearIntervalSpy).toHaveBeenCalled();
+
+  visibility = 'visible';
+  f.document.dispatchEvent(new f.window.Event('visibilitychange')); await settle();
+  expect(uiTimerCalls()).toBe(3);
+
+  clearIntervalSpy.mockClear();
+  f.changeConfig({videoTranslationEnabled: false}); await settle();
+  expect(clearIntervalSpy).toHaveBeenCalled();
+
+  f.changeConfig({videoTranslationEnabled: true}); await settle();
+  expect(uiTimerCalls()).toBe(4);
+
+  clearIntervalSpy.mockClear();
+  dispose(); await settle();
+  expect(clearIntervalSpy).toHaveBeenCalled();
 });
 
 it('原文模式收到大量新命名轨时保留当前轨，恢复双语仍使用当前轨', async () => {

@@ -422,6 +422,24 @@ describe('YouTube timedtext MAIN bridge 消息边界', () => {
         expect(validateYoutubeTimedTextMessage(payload, 'not a valid page URL')).toBeNull();
     });
 
+    it('拒绝恶意 timedtext URL，包括子串路径、伪造域名与凭据', () => {
+        const page = 'https://www.youtube.com/watch?v=current-video';
+        const maliciousUrls = [
+            'http://www.youtube.com/api/timedtext?v=current-video&lang=en',
+            'https://evil.example/api/timedtext?v=current-video&lang=en',
+            'https://www.youtube.com.evil.example/api/timedtext?v=current-video&lang=en',
+            'https://www.youtube.com@evil.example/api/timedtext?v=current-video&lang=en',
+            'https://user:pass@www.youtube.com/api/timedtext?v=current-video&lang=en',
+            'https://:pass@www.youtube.com/api/timedtext?v=current-video&lang=en',
+            'https://www.youtube.com:8443/api/timedtext?v=current-video&lang=en',
+            'https://www.youtube.com/api/timedtext/extra?v=current-video&lang=en',
+            'https://www.youtube.com/prefix/api/timedtext?v=current-video&lang=en',
+        ];
+        maliciousUrls.forEach((url) => {
+            expect(validateYoutubeTimedTextMessage({...payload, url}, page), url).toBeNull();
+        });
+    });
+
     it.each([
         null,
         [],

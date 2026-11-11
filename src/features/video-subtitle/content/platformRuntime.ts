@@ -1,7 +1,7 @@
 /**
  * @file src/features/video-subtitle/content/platformRuntime.ts
  * 文件职责：在会议、Udemy 与 Disney+ 网页中挂载隔离的双语字幕，复用现有视频配置及翻译缓存。
- * 主要内容：观察原生字幕、读取浏览器字幕轨、自动开启明确的会议字幕按钮、优先目标语言人工轨，按保存的双语顺序排列稳定节点并让读音紧跟原文；可选读音行独立请求与取消，不等待译文，每轮只测量各视频一次，按当前文本、读音、顺序、尺寸和字体输入去重布局；长读音保留可读字号并在自有区域提供键盘和触摸滚动，失败句在退避期再次出现仍保留重试入口，处理全屏、动态页面与所有权恢复。
+ * 主要内容：观察原生字幕、读取浏览器字幕轨、自动开启明确的会议字幕按钮、优先目标语言人工轨，按保存的双语顺序排列稳定节点并让读音紧跟原文；250ms 轮询在页面隐藏、功能关闭或视频暂停/结束时休眠，由可见性、配置和播放事件恢复；可选读音行独立请求与取消，不等待译文，每轮只测量各视频一次，按当前文本、读音、顺序、尺寸和字体输入去重布局；长读音保留可读字号并在自有区域提供键盘和触摸滚动，失败句在退避期再次出现仍保留重试入口，处理全屏、动态页面与所有权恢复。
  * 模块边界：只通过注入端口读取配置、翻译和保存设置；布局记录仅属于当前挂载，位置每轮重新读取，字体加载与卸载清除适配状态，不采集音频、不访问账号接口，不修改网站播放器实现。
  */
 import type {Config} from '@/src/core/config/model';
@@ -69,6 +69,7 @@ export function mountPlatformCaptions(ports: PlatformCaptionPorts): () => void {
     let mediaKey = '';
     let fingerprint = getVideoTranslationConfigFingerprint(config);
     let pendingTimer: ReturnType<typeof setTimeout> | undefined;
+    let timer: ReturnType<typeof setInterval> | undefined;
     let layoutInputs: {width: number; height: number; maximumHeight: number; fontSize: number; fontFamily: string; lineSpacing: string} | null = null;
     let fittedInputs: readonly unknown[] | null = null;
     let readingSignature = '';
@@ -236,7 +237,7 @@ export function mountPlatformCaptions(ports: PlatformCaptionPorts): () => void {
         if (targetTrack) setTrackMode(targetTrack, 'hidden');
     };
 
-    const sync = () => {
+    const syncOnce = () => {
         if (disposed) return;
         const enabled = config.on && config.videoTranslationEnabled && config.videoSubtitleVisible !== false
             && getCaptionPlatform(window.location) === platform;
@@ -336,6 +337,22 @@ export function mountPlatformCaptions(ports: PlatformCaptionPorts): () => void {
         }).catch(showFailure);
     };
 
+    // 页面隐藏、功能关闭或媒体暂停/结束时停止 250ms 轮询；恢复由可见性、
+    // 配置订阅和播放事件重新拉起，避免后台标签与暂停播放器持续唤醒字幕同步。
+    const shouldKeepTimerRunning = () => !disposed
+        && document.visibilityState !== 'hidden'
+        && config.on && config.videoTranslationEnabled && config.videoSubtitleVisible !== false
+        && getCaptionPlatform(window.location) === platform
+        && (!video || (!video.paused && !video.ended && !video.seeking));
+    const syncTimer = () => {
+        if (shouldKeepTimerRunning()) {
+            if (timer === undefined) timer = setInterval(sync, 250);
+            return;
+        }
+        if (timer !== undefined) clearInterval(timer);
+        timer = undefined;
+    };
+    const sync = () => { syncOnce(); syncTimer(); };
     const schedule = () => { if (!disposed && pendingTimer === undefined) pendingTimer = setTimeout(() => { pendingTimer = undefined; sync(); }, 80); };
     const invalidateLayout = () => { fittedInputs = null; schedule(); };
     const releaseUserControls = (event: MouseEvent) => {
@@ -348,7 +365,6 @@ export function mountPlatformCaptions(ports: PlatformCaptionPorts): () => void {
         if (records.some(record => !(record.target as Element).closest?.('#fluent-read-platform-captions'))) schedule();
     });
     observer.observe(document.documentElement, {childList: true, subtree: true, characterData: true});
-    const timer = setInterval(sync, 250);
     const unsubscribe = ports.subscribe(() => {
         const next = getVideoTranslationConfigFingerprint(config);
         if (next !== fingerprint) { fingerprint = next; cache.clear(); clear(); }
@@ -356,6 +372,10 @@ export function mountPlatformCaptions(ports: PlatformCaptionPorts): () => void {
     });
     document.addEventListener('fullscreenchange', invalidateLayout);
     document.addEventListener('seeking', schedule, true);
+    document.addEventListener('play', schedule, true);
+    document.addEventListener('pause', schedule, true);
+    document.addEventListener('ended', schedule, true);
+    document.addEventListener('visibilitychange', schedule);
     document.addEventListener('click', releaseUserControls, true);
     window.addEventListener('resize', invalidateLayout);
     document.fonts?.addEventListener('loadingdone', invalidateLayout);
@@ -363,8 +383,11 @@ export function mountPlatformCaptions(ports: PlatformCaptionPorts): () => void {
     return () => {
         disposed = true; clear(); cache.clear(); readings.destroy(); restoreCaptions(); restoreAutoButton();
         if (sourceLine?.parentElement) resetSubtitlePanelLayout(sourceLine.parentElement, true);
-        observer.disconnect(); clearInterval(timer); if (pendingTimer !== undefined) clearTimeout(pendingTimer);
+        observer.disconnect(); if (timer !== undefined) clearInterval(timer); timer = undefined;
+        if (pendingTimer !== undefined) clearTimeout(pendingTimer);
         unsubscribe(); document.removeEventListener('fullscreenchange', invalidateLayout); document.removeEventListener('seeking', schedule, true);
+        document.removeEventListener('play', schedule, true); document.removeEventListener('pause', schedule, true);
+        document.removeEventListener('ended', schedule, true); document.removeEventListener('visibilitychange', schedule);
         document.removeEventListener('click', releaseUserControls, true);
         window.removeEventListener('resize', invalidateLayout); document.fonts?.removeEventListener('loadingdone', invalidateLayout);
         host?.remove(); host = null;

@@ -27,16 +27,15 @@ export class YoutubeHumanCaptions {
         const key = track ? `${id}:${target}:${track.baseUrl}` : '';
         if (key !== this.key) { this.clear(); this.key = key; }
         if (!track || this.cues.length || this.pending || Date.now() < this.retryAt) return;
-        let url: URL;
-        try { url = new URL(buildYoutubeTimedTextUrl(track)); } catch { return; }
-        // 初始化脚本是页面数据；只请求本站的 timedtext，不信任任意 baseUrl。
-        if (url.protocol !== 'https:' || !/(^|\.)youtube\.com$/.test(url.hostname) || url.pathname !== '/api/timedtext') return;
-        this.requestUrl = url.href;
+        // 初始化脚本是页面数据；URL 构造统一 fail closed，非法轨道不会发起请求。
+        const url = buildYoutubeTimedTextUrl(track);
+        if (!url) return;
+        this.requestUrl = url;
         const controller = new AbortController();
         this.controller = controller;
         const pending = (async () => {
             try {
-                const text = await readVideoCaptionText(url.href, this.request, {credentials: 'include', signal: controller.signal});
+                const text = await readVideoCaptionText(url, this.request, {credentials: 'include', signal: controller.signal});
                 const cues = finalizeVideoSubtitleCues(parseYoutubeTimedTextResponse(text));
                 if (controller.signal.aborted || this.key !== key) return;
                 if (!cues.length) throw new Error('人工字幕为空');

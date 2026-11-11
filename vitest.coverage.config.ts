@@ -740,6 +740,7 @@ export default defineConfig({
                 'src/features/selection-translation/services/wordDictionary.ts',
                 'src/features/selection-translation/services/ecdictAsset.ts',
                 'src/features/video-subtitle/content/youtubeSubtitleData.ts',
+                'src/features/video-subtitle/content/youtubeTimedTextUrl.ts',
                 'src/features/video-subtitle/content/platforms.ts',
                 'src/features/video-subtitle/content/youtubeHumanCaptions.ts',
                 'src/features/video-subtitle/content/downloads.ts',

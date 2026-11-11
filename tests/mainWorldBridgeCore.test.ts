@@ -484,6 +484,12 @@ describe('YouTube timedtext MAIN world bridge core', () => {
         expect(isYoutubeTimedTextUrl('/api/timedtext?x=1', base)).toBe(true);
         expect(isYoutubeTimedTextUrl('https://youtube.com/api/timedtext', base)).toBe(true);
         expect(isYoutubeTimedTextUrl('https://notyoutube.com/api/timedtext', base)).toBe(false);
+        expect(isYoutubeTimedTextUrl('https://www.youtube.com.evil.example/api/timedtext', base)).toBe(false);
+        expect(isYoutubeTimedTextUrl('https://www.youtube.com@evil.example/api/timedtext', base)).toBe(false);
+        expect(isYoutubeTimedTextUrl('https://www.youtube.com:8443/api/timedtext', base)).toBe(false);
+        expect(isYoutubeTimedTextUrl('https://www.youtube.com/api/timedtext/extra', base)).toBe(false);
+        expect(isYoutubeTimedTextUrl('https://www.youtube.com/api/timedtext-evil', base)).toBe(false);
+        expect(isYoutubeTimedTextUrl('http://www.youtube.com/api/timedtext', base)).toBe(false);
         expect(isYoutubeTimedTextUrl('https://www.youtube.com/watch', base)).toBe(false);
         expect(isYoutubeTimedTextUrl('http://[bad', base)).toBe(false);
     });

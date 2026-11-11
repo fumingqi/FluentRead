@@ -1,10 +1,11 @@
 /**
  * @file src/features/video-subtitle/content/youtubeSubtitleData.ts
  * 文件职责：提供 YouTube 字幕轨道发现、timedtext 响应解析、增量词流合并、时间轴规范化和 SRT 导出的纯数据处理能力。
- * 主要内容：定义 caption track 与 cue 模型，从页面脚本提取平衡 JSON，选择目标轨道、构造 json3 URL，校验 XML/json3 时间字段，按事件边界及有限撇号/引用规则合并词流并收敛增量前缀，生成可重复导出的时间轴和安全文件名。
+ * 主要内容：定义 caption track 与 cue 模型，从页面脚本提取平衡 JSON，先用共享严格规则校验 timedtext 地址，再选择目标轨道、构造 json3 URL，校验 XML/json3 时间字段，按事件边界及有限撇号/引用规则合并词流并收敛增量前缀，生成可重复导出的时间轴和安全文件名。
  * 模块边界：模块不监听网络、不修改播放器 DOM也不调用翻译；runtime 消费生成的 cues，youtubeTimedTextBridge 只负责捕获响应，函数可在离线 fixture 中独立验证。
  */
 import {decodeTextareaHtml} from '@/src/shared/text/htmlEntities';
+import {isYoutubeTimedTextUrl, parseYoutubeTimedTextUrl} from './youtubeTimedTextUrl';
 
 export interface YoutubeCaptionTrack {
   baseUrl: string;
@@ -101,6 +102,8 @@ export function extractYoutubeCaptionTracks(
         const baseUrl = typeof track.baseUrl === 'string' ? track.baseUrl : '';
         const languageCode = typeof track.languageCode === 'string' ? track.languageCode : '';
         if (!baseUrl || !languageCode) return [];
+        // 初始化脚本属于页面数据；任何非本站 timedtext 地址都不得进入后续请求或捕获缓存。
+        if (!isYoutubeTimedTextUrl(baseUrl, 'https://www.youtube.com/')) return [];
         if (expectedVideoId && !responseVideoId && timedTextVideoId(baseUrl) !== expectedVideoId) return [];
         const nameValue = track.name;
         const name = nameValue && typeof nameValue === 'object'
@@ -148,9 +151,13 @@ export function chooseYoutubeCaptionTrackForLocation(
   return videoId ? chooseYoutubeCaptionTrack(extractYoutubeCaptionTracks(root, videoId), preferredLanguage) : null;
 }
 
-/** 按 YouTube 当前 timedtext 接口约定补充 JSON3 参数；若需要 POT，调用方可再追加。 */
-export function buildYoutubeTimedTextUrl(track: YoutubeCaptionTrack): string {
-  const url = new URL(track.baseUrl);
+/**
+ * 按 YouTube 当前 timedtext 接口约定补充 JSON3 参数；若需要 POT，调用方可再追加。
+ * 非法 baseUrl 返回 null，调用方必须在网络请求前停止，不能把页面数据直接交给 fetch。
+ */
+export function buildYoutubeTimedTextUrl(track: YoutubeCaptionTrack): string | null {
+  const url = parseYoutubeTimedTextUrl(track.baseUrl);
+  if (!url) return null;
   const parameters: Record<string, string> = {
     fmt: 'json3',
     xorb: '2',

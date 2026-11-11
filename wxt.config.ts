@@ -351,9 +351,10 @@ export default defineConfig({
             const dev = wxt.config.command === 'serve';
             const browser = wxt.config.browser;
             // PDF 字体首次导出时下载并缓存，不进入安装包；fontkit 仍使用包内静态代码。
-            // AI SDK 7 的后台脚本使 Chrome 和 Edge 的解包产物分别达到约 66.06 和 66.03 MB。
-            const productionBudget = browser === 'chrome' || browser === 'edge' ? 66_100_000 : 66_000_000;
-            const budget = dev ? (process.env.FLUENTREAD_DEV_SOURCEMAPS === '1' ? 170_000_000 : 70_000_000) : productionBudget;
+            // AI SDK 7 及后续 AI 翻译、侧栏配置合入后，Chrome/Edge 解包产物实测 66.15/66.12 MB。
+            const productionBudget = browser === 'chrome' || browser === 'edge' ? 66_200_000 : 66_000_000;
+            // 开发包不压缩，且各内容脚本各自内联共享代码，实测比正式包大约 4.4 MB；普通开发构建单独放宽到 72 MB。
+            const budget = dev ? (process.env.FLUENTREAD_DEV_SOURCEMAPS === '1' ? 170_000_000 : 72_000_000) : productionBudget;
             // 可选词典按需下载，不再为离线读音放宽安装包体积预算。
             if (fs.existsSync(resolve(wxt.config.outDir, 'reading-annotation'))) throw new Error('读音离线数据不得随扩展打包');
             await checkExtensionSize(wxt.config.outDir, budget);

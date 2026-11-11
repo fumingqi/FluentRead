@@ -1,0 +1,109 @@
+{
+  "directory": "d:\\chrome-FluentTranslate\\FluentRead\\.output\\chrome-mv3",
+  "files": 551,
+  "totalBytes": 66146033,
+  "bytesByExtension": {
+    ".wasm": 35206651,
+    ".js": 20705096,
+    ".mjs": 1378188,
+    ".json": 4756129,
+    ".txt": 489857,
+    ".ttf": 573724,
+    ".css": 1223092,
+    ".jpg": 136275,
+    ".bcmap": 1165667,
+    ".woff2": 193828,
+    ".pfb": 200615,
+    ".png": 32475,
+    "(none)": 25019,
+    ".md": 39382,
+    ".html": 20035
+  },
+  "bytesByDirectory": {
+    "fluent-read-ai": 32230802,
+    "content-scripts": 7791761,
+    "(root)": 5999424,
+    "fluent-read-ocr": 3075253,
+    "assets": 2659368,
+    "i18n": 3919459,
+    "chunks": 7140794,
+    "pdfjs": 2760410,
+    "third-party-notices": 480372,
+    "misc": 53106,
+    "icon": 32475,
+    "fluent-read-manga": 1380,
+    "_locales": 1429
+  },
+  "largestFiles": [
+    {
+      "path": "fluent-read-ai\\ort-wasm-simd-threaded.asyncify.wasm",
+      "bytes": 23567050
+    },
+    {
+      "path": "fluent-read-ai\\wllama.wasm",
+      "bytes": 8457512
+    },
+    {
+      "path": "content-scripts\\content.js",
+      "bytes": 3260514
+    },
+    {
+      "path": "background.js",
+      "bytes": 2865404
+    },
+    {
+      "path": "fluent-read-ocr\\core\\tesseract-core-simd-lstm.wasm",
+      "bytes": 2857601
+    },
+    {
+      "path": "content-scripts\\neteaseMailFrame.js",
+      "bytes": 2292705
+    },
+    {
+      "path": "content-scripts\\supportedFrame.js",
+      "bytes": 2053872
+    },
+    {
+      "path": "localTtsWorker.js",
+      "bytes": 1756579
+    },
+    {
+      "path": "assets\\pdf.worker.min.mjs",
+      "bytes": 1327408
+    },
+    {
+      "path": "i18n\\ru-RU.json",
+      "bytes": 825597
+    },
+    {
+      "path": "ecdict-core.json",
+      "bytes": 823996
+    },
+    {
+      "path": "chunks\\fontkit.es-B5CiMUvP.js",
+      "bytes": 709574
+    },
+    {
+      "path": "i18n\\ja-JP.json",
+      "bytes": 666411
+    },
+    {
+      "path": "i18n\\ko-KR.json",
+      "bytes": 629284
+    },
+    {
+      "path": "i18n\\fr-FR.json",
+      "bytes": 628342
+    }
+  ],
+  "duplicates": [
+    {
+      "paths": [
+        "third-party-notices\\ppu-ocv-MIT.txt",
+        "third-party-notices\\ppu-paddle-ocr-MIT.txt"
+      ],
+      "bytesEach": 1080,
+      "duplicateBytes": 1080
+    }
+  ]
+}

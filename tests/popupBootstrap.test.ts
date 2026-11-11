@@ -18,7 +18,7 @@ vi.mock('../src/platform/browser/capabilities', () => ({browserCapabilities: {ge
 vi.mock('vue', () => ({createApp: ports.createApp}));
 vi.mock('element-plus/es/components/base/style/css', () => ({}));
 vi.mock('element-plus/es/components/tooltip/style/css', () => ({}));
-vi.mock('@element-plus/icons-vue', () => ({Coffee: {kind: 'coffee'}, ...Object.fromEntries(
+vi.mock('@element-plus/icons-vue', () => ({...Object.fromEntries(
     ['CircleCheckFilled', 'Download', 'Edit', 'InfoFilled', 'Loading', 'Refresh', 'Setting', 'Upload', 'Warning', 'WarningFilled'].map(name => [name, {kind: name}]),
 )}));
 vi.mock('element-plus', () => Object.fromEntries(
@@ -161,7 +161,6 @@ describe('Options startup lifecycle', () => {
         installOptionsApp(app,{documentRoot:null,uiRoot:root,documentTitleKey:'owned-title'});
         expect(ports.plugin).toHaveBeenLastCalledWith({documentRoot:null,documentTitleKey:'owned-title',uiRoot:root});
         expect(ports.component.mock.calls.some(([name])=>name==='ElDialog')).toBe(false);
-        expect(ports.component).toHaveBeenCalledWith('Coffee',{kind:'coffee'});
     });
 
     describe('Options page startup recovery', () => {
@@ -452,7 +451,7 @@ describe('Popup fresh configuration bootstrap', () => {
         expect(ports.mainLoaded).not.toHaveBeenCalled(); expect(ports.ensureBundle).not.toHaveBeenCalled();
         expect(ports.font).toHaveBeenCalledWith('system'); expect(ports.createApp).toHaveBeenCalledWith({kind: 'onboarding'});
         expect(ports.plugin).toHaveBeenCalledWith({documentRoot: document.body, documentTitleKey: 'metadata.popupTitle'});
-        expect(ports.use).toHaveBeenCalledWith({kind: 'i18n'}); expect(ports.component).toHaveBeenCalledWith('Coffee', {kind: 'coffee'});
+        expect(ports.use).toHaveBeenCalledWith({kind: 'i18n'});
         expect(ports.mount).toHaveBeenCalledWith('#owned');
     });
     it.each(['loading', 'blocked'] as const)('rejects resolved configuration with %s hydration before importing a root or preparing assets', async hydration => {

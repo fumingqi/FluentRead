@@ -414,7 +414,7 @@ async function main() {
     }
     currentCase = 'restored-main';
     assert.equal((await popup.locator('[data-testid="popup-version"]').innerText()).trim(), `v${manifest.version}`);
-    assert.match(await popup.locator('.donation-button').innerText(), /赞赏/);
+    assert.equal(await popup.locator('.donation-button').count(), 0);
     assert.match(await popup.locator('[data-testid="popup-feature-services"]').innerText(), /翻译服务/);
     assert.equal(await popup.getByText('快捷功能', {exact: true}).count(), 0);
     const light = await geometry(popup, 'default-light'); assert.equal(light.background, 'rgb(255, 255, 255)');
@@ -427,9 +427,7 @@ async function main() {
     const serviceFrame = await popup.locator('.provider-summary').evaluate(node => {const style = getComputedStyle(node); return {border: style.borderTopWidth, radius: style.borderRadius, background: style.backgroundColor};});
     assert.equal(serviceFrame.border, '1px'); assert.notEqual(serviceFrame.background, 'rgba(0, 0, 0, 0)'); report.layout.serviceFrame = serviceFrame;
     assert(light.footerBottom <= light.height + 1); assert(light.scrollHeight <= light.clientHeight + 1);
-    await shot(popup, 'popup-light'); report.cases.push('restored main actions, site controls, version, donation and footer; white canvas; no heading/clipping');
-    await popup.locator('.donation-button').click(); await popup.locator('.donation-card').waitFor(); await shot(popup, 'donation');
-    await popup.locator('.donation-kofi').scrollIntoViewIfNeeded(); await shot(popup, 'donation-bottom'); await popup.locator('.donation-close').click();
+    await shot(popup, 'popup-light'); report.cases.push('restored main actions, site controls, version and footer; white canvas; no heading/clipping');
     const link = popup.locator('.opensource-link'); assert.match(await link.innerText(), /开源项目.*↗/s);
     await context.route('https://github.com/Bistutu/FluentRead', route => route.fulfill({contentType: 'text/html', body: '<title>Project link fixture</title>'}));
     const projectPagePromise = context.waitForEvent('page'); await link.click(); const projectPage = await projectPagePromise; await projectPage.waitForURL('https://github.com/Bistutu/FluentRead'); await projectPage.close();

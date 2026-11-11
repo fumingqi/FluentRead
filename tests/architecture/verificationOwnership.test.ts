@@ -25,7 +25,7 @@ const ROOT_FILES = [
 ] as const;
 const PRODUCT_TOOL_SCRIPTS = [
     'scripts/build-product-assets.cjs', 'scripts/capture-product-assets.cjs',
-    'scripts/package-product-kit.cjs', 'scripts/verify-product-site.cjs', 'scripts/verify-support-ui.cjs',
+    'scripts/package-product-kit.cjs', 'scripts/verify-product-site.cjs',
 ];
 const DOCS_TOOL_SCRIPTS = [
     'scripts/capture-docs-ui.cjs',

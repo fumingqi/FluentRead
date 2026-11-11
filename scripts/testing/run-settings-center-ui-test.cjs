@@ -97,14 +97,6 @@ const expectedExpandedQuickFeatureCount = 5;
 const modelUsageAverageSelector = '#settings-model-usage section.usage-average-card';
 const modelUsageRequestLogSelector = '#settings-model-usage section.usage-request-log-card';
 const expectedDefaultServiceDescription = '未单独指定方案时，全文、悬浮和划词翻译使用此服务';
-function matchesAboutSupportQrBounds(bounds, availableWidth) {
-  // 赞赏图片应填满卡片内容宽度，桌面与窄屏都按实际可用空间判断。
-  return Boolean(bounds && Number.isFinite(bounds.width) && Number.isFinite(bounds.height)
-    && Number.isFinite(availableWidth) && availableWidth > 0
-    && Math.abs(bounds.width - availableWidth) <= 1
-    && Math.abs(bounds.height - availableWidth) <= 1
-    && Math.abs(bounds.width - bounds.height) <= 1);
-}
 function matchesPalettePopupSurfaces(metrics) {
   const actual = parseCssColor(metrics.translateButtonBackground);
   const declared = parseCssColor(metrics.declaredActionBackground);
@@ -1612,34 +1604,18 @@ async function main() {
         report.assertions.independentAreaSettings = true;
       }
       if (id === 'settings-about') {
-        const supportPanel = anchor.locator('.about-support-panel');
-        const supportMethods = supportPanel.locator('.about-support-method');
-        if (await supportPanel.count() !== 1 || await supportMethods.count() !== 2) {
-          throw new Error('关于页缺少微信与 Ko-fi 两个赞赏入口');
+        const contactTrigger = anchor.locator('.about-wechat-contact');
+        if (await contactTrigger.count() !== 1) {
+          throw new Error('关于页缺少微信联系方式入口');
         }
-        const supportLinks = await supportMethods.evaluateAll(methods => methods.map(method => ({
-          provider: method.dataset.supportMethod,
-          href: method.getAttribute('href'),
-          text: method.textContent?.trim(),
-        })));
-        if (supportLinks[0]?.provider !== 'wechat' || supportLinks[0]?.href !== null
-          || supportLinks[1]?.provider !== 'kofi' || supportLinks[1]?.href !== 'https://ko-fi.com/thinkstu') {
-          throw new Error(`关于页赞赏链接异常：${JSON.stringify(supportLinks)}`);
-        }
-        const qrBounds = await supportPanel.locator('.about-support-qr').boundingBox();
-        const availableQrWidth = await supportPanel.locator('.about-support-wechat').evaluate(card => {
-          const style = getComputedStyle(card);
-          return card.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-        });
-        if (!matchesAboutSupportQrBounds(qrBounds, availableQrWidth)) {
-          throw new Error(`关于页赞赏图片未填满卡片内容宽度或不是正方形：${JSON.stringify({qrBounds, availableQrWidth})}`);
+        if (await anchor.locator('.about-support-panel, .about-support-method').count() !== 0) {
+          throw new Error('关于页仍显示已删除的赞赏入口');
         }
         const pageCount = context.pages().length;
         const aboutUrl = page.url();
-        const checkQrPreview = async kind => {
-          const contact = kind === 'contact';
-          const triggerSelector = contact ? '#settings-about .about-wechat-contact' : '#settings-about .about-support-wechat';
-          const preview = page.locator(contact ? '.about-wechat-contact-dialog' : '.about-approve-dialog');
+        const checkContactPreview = async () => {
+          const triggerSelector = '#settings-about .about-wechat-contact';
+          const preview = page.locator('.about-wechat-contact-dialog');
           await page.locator(triggerSelector).click();
           await preview.waitFor({state: 'visible', timeout});
           const image = await preview.locator('img').evaluate(async image => {
@@ -1652,23 +1628,19 @@ async function main() {
               declaredHeight: image.getAttribute('height'),
             };
           });
-          const expectedWidth = contact ? '888' : '1152';
-          const expectedHeight = contact ? '1131' : '1152';
           if (!image.src || image.width <= 0 || image.height <= 0
-            || image.declaredWidth !== expectedWidth || image.declaredHeight !== expectedHeight) {
-            throw new Error(`关于页 ${kind} 二维码没有正确解码或尺寸异常：${JSON.stringify(image)}`);
+            || image.declaredWidth !== '888' || image.declaredHeight !== '1131') {
+            throw new Error(`关于页联系二维码没有正确解码或尺寸异常：${JSON.stringify(image)}`);
           }
           if (context.pages().length !== pageCount || page.url() !== aboutUrl) {
-            throw new Error(contact ? '点击联系码离开了关于页或打开了新标签页' : '点击赞赏码离开了关于页或打开了新标签页');
+            throw new Error('点击联系码离开了关于页或打开了新标签页');
           }
           await page.keyboard.press('Escape');
           await preview.waitFor({state: 'hidden', timeout});
           await page.waitForFunction(selector => document.querySelector(selector) === document.activeElement, triggerSelector, {timeout});
           return image;
         };
-        const supportImage = await checkQrPreview('support');
-        const contactImage = await checkQrPreview('contact');
-        if (contactImage.src === supportImage.src) throw new Error('微信联系码错误地使用了赞赏码图片');
+        const contactImage = await checkContactPreview();
 
         await selectSettingsSection(page, 'settings-general');
         await page.locator('#settings-general').waitFor({state: 'visible', timeout});
@@ -1676,26 +1648,18 @@ async function main() {
         if (await page.locator('.about-qr-dialog:visible').count() !== 0) throw new Error('离开关于页后仍显示二维码弹窗');
         await button.click();
         await anchor.waitFor({state: 'visible', timeout});
-        const returnedContactImage = await checkQrPreview('contact');
-        const returnedSupportImage = await checkQrPreview('support');
-        if (returnedContactImage.src !== contactImage.src || returnedSupportImage.src !== supportImage.src) {
-          throw new Error('返回关于页后联系码或赞赏码图片发生错误切换');
+        const returnedContactImage = await checkContactPreview();
+        if (returnedContactImage.src !== contactImage.src) {
+          throw new Error('返回关于页后联系码图片发生错误切换');
         }
-        report.assertions.aboutQrRoundTrip = {contactImage, supportImage, returnedContactImage, returnedSupportImage};
+        report.assertions.aboutQrRoundTrip = {contactImage, returnedContactImage};
         if (await anchor.locator('.about-experience, .about-features, .about-feature').count() !== 0) {
           throw new Error('关于页仍显示已删除的核心体验介绍');
-        }
-        if (await supportPanel.locator('.about-support-original-link').count() !== 0) {
-          throw new Error('关于页仍显示多余的原图文字链接');
-        }
-        const supportCopy = await supportPanel.innerText();
-        if (!supportCopy.includes('流畅阅读的发展离不开社区的慷慨支持，你可以通过微信赞赏或Ko-fi支持我们。')) {
-          throw new Error('关于页赞赏说明没有使用当前中文 i18n 文案');
         }
         if (await anchor.locator('.about-feature-list').count() !== 0) {
           throw new Error('关于页仍显示已替换的核心体验列表');
         }
-        report.assertions.aboutSupportArea = true;
+        report.assertions.aboutContactArea = true;
       }
       const workspace = page.locator('main.workspace');
       const pageTitle = (await workspace.getAttribute('aria-label'))?.trim();
@@ -2581,9 +2545,8 @@ async function main() {
       const surface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim().toLowerCase();
       // 明亮皮肤可以有意使用纯白内容卡；只拦截与当前皮肤语义底色不一致的硬编码白块。
       if (surface === '#fff' || surface === '#ffffff') return [];
-      // 收款二维码需要白底保证扫码对比度，不属于皮肤表面。
       // 译文样式预览与卡片缩略图模拟网站自身配色，按设计不随扩展皮肤着色。
-      const excluded = '.translation-style-preview-page, .translation-style-card-sample, .interface-skin-live-preview, .popup-layout-live-preview, .about-support-wechat';
+      const excluded = '.translation-style-preview-page, .translation-style-card-sample, .interface-skin-live-preview, .popup-layout-live-preview';
       return [...document.querySelectorAll('.settings-card *')]
         .filter(element => {
           if (!(element instanceof HTMLElement) || element.closest(excluded)) return false;

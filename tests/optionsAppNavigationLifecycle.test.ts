@@ -588,18 +588,16 @@ describe('OptionsApp actual learning-panel reload callback', () => {
 
 // Optional real-client parent mode: navigation, search, hash resolution and capability gates
 // remain the actual Options template/setup; async feature modules are counted display ports.
-type AboutClientFixture = {supportGlobal?: string};
 type ClientRouteFixture = {target: string; internal?: boolean; initialSection?: string};
-async function mountClientOptions(requestedSection: string, browser: 'userscript' | 'chrome' | 'firefox', about?: AboutClientFixture, route?: ClientRouteFixture, client?: {onClose: () => void}) {
+async function mountClientOptions(requestedSection: string, browser: 'userscript' | 'chrome' | 'firefox', about?: boolean, route?: ClientRouteFixture, client?: {onClose: () => void}) {
   const scope = current!;
   if (!owns(scope)) throw inactive();
   vi.stubEnv('BROWSER', browser);
   vi.doMock('@/src/app/options/assets/wechat-contact.jpg', () => ({default: 'synthetic-contact-image'}));
-  const [navigation, capabilities, core, english, patterns, ordinaryImages] = await Promise.all([
+  const [navigation, capabilities, core, english, patterns] = await Promise.all([
     import('@/src/features/settings/model/navigation'),
     vi.importActual<typeof import('@/src/platform/browser/capabilities')>('@/src/platform/browser/capabilities'),
     import('@/src/core/i18n'), import('@/src/core/i18n/messages/en-US'), import('@/src/core/i18n/messages/legacy-patterns'),
-    vi.importActual<typeof import('@/src/app/options/aboutImages')>('@/src/app/options/aboutImages'),
   ]);
   if (!owns(scope)) throw inactive();
   core.registerUiLanguageBundle('en-US', {messages: english.enUSMessages, legacyText: english.enUSLegacyText, legacyPatterns: patterns.createLegacyPatternSet('en-US')});
@@ -610,9 +608,7 @@ async function mountClientOptions(requestedSection: string, browser: 'userscript
     attributes: Object.fromEntries(['class', 'style', 'data-theme', 'data-interface-skin', 'data-interface-font']
       .map(name => [name, document.documentElement.getAttribute(name)]))});
   const initialHostDocumentState = hostDocumentState();
-  if (about) vi.stubGlobal('__FLUENTREAD_APPROVE_DATA__', about.supportGlobal);
-  const images = {support: vi.fn((normalUrl: string) => ordinaryImages.getSupportImageUrl(normalUrl) as string),
-    contact: vi.fn(() => ordinaryImages.getContactImageUrl() as string)};
+  const images = {contact: vi.fn(() => 'synthetic-contact-image')};
   let dialogSlotRuns = 0;
   const dialogNotifications: {closed?: () => void} = {};
   for (const key of ['window', 'document', 'Document', 'ShadowRoot', 'Node', 'Element', 'HTMLElement', 'SVGElement', 'Event'])
@@ -664,7 +660,7 @@ async function mountClientOptions(requestedSection: string, browser: 'userscript
   configureOptionsPorts({i18n, config, configReady: Promise.resolve(), subscribeConfig: () => unsubscribe,
     browserCapabilities: capabilities.resolveBrowserCapabilities({browser, manifestVersion: browser === 'chrome' ? 3 : 2}),
     theme, skin() {}, font() {}, registerAppearance: () => () => undefined});
-  vi.doMock('@/src/app/options/aboutImages', () => ({getSupportImageUrl: images.support, getContactImageUrl: images.contact}));
+  vi.doMock('@/src/app/options/aboutImages', () => ({getContactImageUrl: images.contact}));
   vi.doMock('@/src/features/settings/ui/SettingsSections.vue', () => {loads.settings();return {__esModule: true, default: settingsPort};});
   vi.doMock('@/src/features/settings/ui/LearningCenter.vue', () => {loads.learning();return {__esModule: true, default: learningPort};});
   vi.doMock('@/src/features/settings/ui/components/SettingsSectionNavigation.vue', () => ({default: anchorPort}));
@@ -731,9 +727,8 @@ async function mountClientOptions(requestedSection: string, browser: 'userscript
   const navigateHash = async (section: string) => {location.hash = browser === 'userscript' ? `${prefix}/${section}` : `#${section}`;window.dispatchEvent(new window.Event('hashchange'));await settle();};
   const previewState = () => {
     const dialog = host.querySelector<HTMLElement>('[data-about-dialog-port]')!;
-    const image = dialog.querySelector<HTMLImageElement>('.about-approve-preview')!;
+    const image = dialog.querySelector<HTMLImageElement>('.about-qr-preview')!;
     return {visible: dialog.getAttribute('data-model-visible'),
-      kind: dialog.classList.contains('about-wechat-contact-dialog') ? 'contact' : 'support',
       title: dialog.getAttribute('title'), src: image.getAttribute('src'), alt: image.getAttribute('alt'),
       width: image.getAttribute('width'), height: image.getAttribute('height')};
   };
@@ -907,39 +902,28 @@ describe('OptionsApp actual client localized sidebar brand', () => {
 
 // Linkedom/client display-port evidence only: this is not an Element Plus animation,
 // browser image decode, native focus, or JPEG-cache performance test.
-describe('OptionsApp actual client lazy About image ownership', () => {
-  const supportSnapshot = 'data:image/jpeg;base64,c3ludGhldGljLXNldHVwLXN1cHBvcnQ=';
+describe('OptionsApp actual client lazy About contact image ownership', () => {
   const contactPort = 'synthetic-contact-image';
-  const mountAbout = (section = 'settings-general', supportGlobal?: string) =>
-    mountClientOptions(section, 'userscript', {supportGlobal});
-  const assertSupportSnapshot = (h: Awaited<ReturnType<typeof mountAbout>>, expected: string) => {
-    expect(h.images.support).toHaveBeenCalled();
-    expect(h.images.support.mock.calls.every(([url]) => url === expected)).toBe(true);
-  };
+  const mountAbout = (section = 'settings-general') => mountClientOptions(section, 'userscript', true);
 
-  it('does not acquire either image or assign a preview src in General even when the hidden dialog slot renders', async () => {
+  it('does not acquire the contact image or assign a preview src in General even when the hidden dialog slot renders', async () => {
     const h = await mountAbout();
     expect(h.dialogSlotEvaluations()).toBeGreaterThan(0);
-    expect(h.previewState()).toMatchObject({visible: 'false', src: null, kind: 'support'});
-    expect(h.images.support).not.toHaveBeenCalled();
+    expect(h.previewState()).toMatchObject({visible: 'false', src: null});
     expect(h.images.contact).not.toHaveBeenCalled();
     expect(h.host.querySelector('#settings-about')).toBeNull();
     await h.choose('settings-about');
-    expect(h.host.querySelector('.about-support-qr')?.getAttribute('src')).toBe('/misc/approve.jpg');
-    assertSupportSnapshot(h, '/misc/approve.jpg');
     expect(h.images.contact).not.toHaveBeenCalled();
     expect(h.previewState()).toMatchObject({visible: 'false', src: null});
     expect(h.hostDocumentState()).toEqual(h.initialHostDocumentState);
     expect(h.errors).toEqual([]);
   });
 
-  it('acquires contact only through its public button and retains the setup support snapshot across host global changes', async () => {
-    const h = await mountAbout('settings-general', supportSnapshot);
-    vi.stubGlobal('__FLUENTREAD_APPROVE_DATA__', 'synthetic-later-host-support');
+  it('acquires contact only through its public button and keeps navigation free of eager image reads', async () => {
+    const h = await mountAbout();
     await h.choose('settings-about');
-    expect(h.host.querySelector('.about-support-qr')?.getAttribute('src')).toBe(supportSnapshot);
+    expect(h.host.querySelector('.about-support-qr')).toBeNull();
     expect(h.images.contact).not.toHaveBeenCalled();
-    assertSupportSnapshot(h, supportSnapshot);
     await h.choose('settings-general');
     await h.choose('settings-about');
     expect(h.images.contact).not.toHaveBeenCalled();
@@ -948,45 +932,32 @@ describe('OptionsApp actual client lazy About image ownership', () => {
     expect(contact.getAttribute('aria-haspopup')).toBe('dialog');
     contact.click();await h.settle();
     expect(h.images.contact).toHaveBeenCalledTimes(1);
-    expect(h.previewState()).toMatchObject({visible: 'true', kind: 'contact', src: contactPort,
+    expect(h.previewState()).toMatchObject({visible: 'true', src: contactPort,
       alt: h.t('options.aboutWechatContactCodeAlt'), width: '888', height: '1131'});
-    assertSupportSnapshot(h, supportSnapshot);
-    const support = h.host.querySelector<HTMLButtonElement>('button.about-support-wechat')!;
-    support.click();await h.settle();
-    expect(h.images.contact).toHaveBeenCalledTimes(1);
-    expect(h.previewState()).toMatchObject({visible: 'true', kind: 'support', src: supportSnapshot,
-      alt: h.t('popup.donationCodeAlt'), width: '1152', height: '1152'});
-    support.click();await h.settle();
-    expect(h.images.contact).toHaveBeenCalledTimes(1);
-    expect(h.previewState().src).toBe(supportSnapshot);
     contact.click();await h.settle();
     expect(h.images.contact).toHaveBeenCalledTimes(2);
     expect(h.previewState().src).toBe(contactPort);
-    assertSupportSnapshot(h, supportSnapshot);
     expect(h.hostDocumentState()).toEqual(h.initialHostDocumentState);
     expect(h.errors).toEqual([]);
   });
 
-  it.each(['contact', 'support'] as const)('commits no preview state when the selected %s accessor throws', async selected => {
-    const h = await mountAbout('settings-about', supportSnapshot);
-    const previous = selected === 'contact' ? 'support' : 'contact';
-    h.host.querySelector<HTMLButtonElement>(previous === 'contact' ? 'button.about-wechat-contact' : 'button.about-support-wechat')!.click();
-    await h.settle();
+  it('commits no preview state when the contact accessor throws', async () => {
+    const h = await mountAbout('settings-about');
+    const contact = h.host.querySelector<HTMLButtonElement>('button.about-wechat-contact')!;
+    contact.click();await h.settle();
     const before = h.previewState();
-    expect(before.visible).toBe('true');expect(before.kind).toBe(previous);
-    const failure = new Error(`synthetic ${selected} image restoration failed`);
-    if (selected === 'contact') h.images.contact.mockImplementationOnce(() => {throw failure;});
-    else h.images.support.mockImplementationOnce(() => {throw failure;});
-    h.host.querySelector<HTMLButtonElement>(selected === 'contact' ? 'button.about-wechat-contact' : 'button.about-support-wechat')!.click();
-    await h.settle();
+    expect(before.visible).toBe('true');
+    const failure = new Error('synthetic contact image restoration failed');
+    h.images.contact.mockImplementationOnce(() => {throw failure;});
+    contact.click();await h.settle();
     expect(h.errors).toEqual([failure]);
     expect(h.previewState()).toEqual(before);
     expect(h.hostDocumentState()).toEqual(h.initialHostDocumentState);
   });
 
-  it.each(['contact', 'support'] as const)('retains %s preview src through close update and returns focus only at the closed notification', async selected => {
-    const h = await mountAbout('settings-about', supportSnapshot);
-    const trigger = h.host.querySelector<HTMLButtonElement>(selected === 'contact' ? 'button.about-wechat-contact' : 'button.about-support-wechat')!;
+  it('retains the contact preview src through close update and returns focus only at the closed notification', async () => {
+    const h = await mountAbout('settings-about');
+    const trigger = h.host.querySelector<HTMLButtonElement>('button.about-wechat-contact')!;
     const focus = vi.spyOn(trigger, 'focus').mockImplementation(() => undefined);
     trigger.click();await h.settle();
     const before = h.previewState();expect(before.visible).toBe('true');
@@ -1000,13 +971,12 @@ describe('OptionsApp actual client lazy About image ownership', () => {
     expect(focus).toHaveBeenCalledOnce();
     expect(focus).toHaveBeenCalledWith({preventScroll: true});
     expect(h.images.contact).toHaveBeenCalledTimes(contactCalls);
-    assertSupportSnapshot(h, supportSnapshot);
     expect(h.hostDocumentState()).toEqual(h.initialHostDocumentState);
     expect(h.errors).toEqual([]);
   });
 
   it.each(['leave-about', 'unmount'] as const)('does not restore the old trigger after %s before the delayed closed notification', async outcome => {
-    const h = await mountAbout('settings-about', supportSnapshot);
+    const h = await mountAbout('settings-about');
     const trigger = h.host.querySelector<HTMLButtonElement>('button.about-wechat-contact')!;
     const focus = vi.spyOn(trigger, 'focus').mockImplementation(() => undefined);
     trigger.click();await h.settle();
@@ -1014,10 +984,9 @@ describe('OptionsApp actual client lazy About image ownership', () => {
     await h.settle();expect(focus).not.toHaveBeenCalled();
     if (outcome === 'leave-about') await h.choose('settings-general');
     else h.dispose();
-    const supportCalls = h.images.support.mock.calls.length, contactCalls = h.images.contact.mock.calls.length;
+    const contactCalls = h.images.contact.mock.calls.length;
     h.notifyDialogClosed();await h.settle();
     expect(focus).not.toHaveBeenCalled();
-    expect(h.images.support).toHaveBeenCalledTimes(supportCalls);
     expect(h.images.contact).toHaveBeenCalledTimes(contactCalls);
     expect(h.hostDocumentState()).toEqual(h.initialHostDocumentState);
     expect(h.errors).toEqual([]);

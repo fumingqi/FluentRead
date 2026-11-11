@@ -5,7 +5,6 @@
  * 模块边界：仅通过扩展视图身份或当前标签页 id 确认布局，不读取 URL 或网页内容、不保存配置；业务交互由 PopupApp 和 feature 公共入口完成。
  */
 import {createApp, type Component} from 'vue';
-import {Coffee} from '@element-plus/icons-vue';
 import browser from 'webextension-polyfill';
 import {browserCapabilities} from '@/src/platform/browser/capabilities';
 import {createUiI18nPlugin} from '@/src/ui/i18n'
@@ -134,7 +133,6 @@ export async function mountPreparedPopupApp(selector: string): Promise<void> {
       || preparedFont !== config.interfaceFont);
     const app = createApp(App)
     app.use(createUiI18nPlugin({documentRoot: document.body, documentTitleKey: 'metadata.popupTitle'}))
-    app.component('Coffee', Coffee);
     app.onUnmount(releaseContainer);
     // 由唯一的 WXT 启动入口提供挂载目标，避免 app 层假定页面结构。
     app.mount(selector)

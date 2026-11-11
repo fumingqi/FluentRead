@@ -1,7 +1,7 @@
 <!--
 @file src/features/settings/ui/components/PopupPreview.vue
 文件职责：用真实 DOM 按菜单栏的实际结构、尺寸和皮肤变量还原一份 Popup，供风格预览和菜单栏布局预览共用，保证两处看到的是同一个界面。
-主要内容：优先复用脚本构建注入的品牌图标并保留扩展资源回退，依次绘制品牌与版本、赞赏图标、受支持时的侧边栏图标和设置、语言与服务、网页及局部翻译、站点开关、快捷入口卡片和底部信息栏；按构建与实际平台能力过滤专属入口，区域与快捷入口按传入顺序渲染，传入编辑层级和排序控制器时叠加拖动手柄与插入提示。
+主要内容：优先复用脚本构建注入的品牌图标并保留扩展资源回退，依次绘制品牌与版本、受支持时的侧边栏图标和设置、语言与服务、网页及局部翻译、站点开关、快捷入口卡片和底部信息栏；按构建与实际平台能力过滤专属入口，区域与快捷入口按传入顺序渲染，传入编辑层级和排序控制器时叠加拖动手柄与插入提示。
 模块边界：只负责展示与把排序手势交给外部控制器，不读取用户配置、不连接浏览器状态，也不执行菜单栏业务；范例里的服务、快捷键和开关状态是固定示意，不代表用户当前设置。
 -->
 <template>
@@ -18,7 +18,6 @@
         <span><strong>{{ t('common.brand') }}</strong><small>v{{ version }}</small></span>
       </span>
       <span class="preview-header-actions">
-        <span class="preview-header-icon"><Coffee /></span>
         <span v-if="sidepanelAvailable" class="preview-header-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2.5" y="3.5" width="15" height="13" rx="2.5"/><path d="M12.5 3.5v13M5.5 8h4M5.5 11h4"/></svg></span>
         <span><Setting />{{ translateLegacy('设置') }}</span>
       </span>
@@ -147,7 +146,7 @@
 
 <script setup lang="ts">
 import {computed} from 'vue'
-import {Coffee, Setting} from '@element-plus/icons-vue'
+import {Setting} from '@element-plus/icons-vue'
 import {version} from '@/package.json'
 import ServiceIcon from '@/src/ui/components/ServiceIcon.vue'
 import {canOpenTranslationSidepanel} from '@/src/platform/browser/translationSidepanel'

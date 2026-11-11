@@ -100,8 +100,8 @@
   transform: none;
 }
 
-/* 顶部的赞赏与设置按钮。 */
-:root[data-interface-skin-kind="palette"][data-interface-skin] .popup-shell :is(.settings-button, .donation-button) {
+/* 顶部的设置按钮。 */
+:root[data-interface-skin-kind="palette"][data-interface-skin] .popup-shell .settings-button {
   border: var(--skin-chip-border, 1px solid var(--line));
   border-radius: var(--skin-chip-radius, var(--skin-control-radius, 10px));
   color: var(--skin-chip-color, var(--muted));
@@ -113,7 +113,7 @@
   color: var(--skin-chip-color, var(--ink));
 }
 
-:root[data-interface-skin-kind="palette"][data-interface-skin] .popup-shell :is(.settings-button, .donation-button):hover {
+:root[data-interface-skin-kind="palette"][data-interface-skin] .popup-shell .settings-button:hover {
   border-color: color-mix(in srgb, var(--brand) 40%, var(--line));
   color: var(--skin-chip-hover-color, var(--brand-strong));
   background: var(--skin-chip-hover, var(--brand-soft));
@@ -260,7 +260,6 @@
 }
 
 :root[data-interface-skin-kind="palette"][data-interface-skin] .popup-drawer,
-:root[data-interface-skin-kind="palette"][data-interface-skin] .donation-card,
 :root[data-interface-skin-kind="palette"][data-interface-skin] .service-picker-panel {
   border-color: var(--line);
   color: var(--ink);

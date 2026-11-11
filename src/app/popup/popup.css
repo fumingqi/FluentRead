@@ -124,16 +124,6 @@ button:focus-visible, select:focus-visible { outline: 3px solid rgba(239, 71, 11
 }
 .settings-button:hover { border-color: rgba(239, 71, 118, .35); color: var(--brand-strong); background: var(--brand-soft); }
 .settings-button svg { width: 17px; height: 17px; flex: none; }
-.donation-button {
-  display: inline-flex; flex: none; align-items: center; justify-content: center; width: 34px; min-width: 34px; height: 34px; padding: 0;
-  border: 1px solid rgba(215, 166, 47, .28); border-radius: 11px; color: #a16b12; background: #fff9e9; font-size: 11px; font-weight: 700; cursor: pointer;
-  transition: border-color 160ms ease, color 160ms ease, background 160ms ease, transform 160ms ease;
-}
-.donation-button:hover { border-color: rgba(215, 166, 47, .54); color: #8d5a08; background: #fff3cf; transform: translateY(-1px); }
-.donation-button svg { width: 16px; height: 16px; flex: none; }
-:root.dark .donation-button { border-color: rgba(226, 184, 73, .28); color: #f0c967; background: rgba(199, 150, 40, .14); }
-:root.dark .donation-button:hover { border-color: rgba(240, 201, 103, .54); color: #ffe29a; background: rgba(199, 150, 40, .22); }
-
 .hero-card {
   padding: 11px 13px;
   border: 1px solid var(--line);
@@ -387,49 +377,6 @@ footer > button { justify-self: end; }
 .opensource-link svg { width: 12px; height: 12px; fill: currentColor; }
 .opensource-link .external-mark { color: inherit; font-size: 12px; line-height: 1; }
 
-.donation-overlay {
-  position: fixed; z-index: 4000; inset: 0; display: grid; place-items: center; padding: 16px;
-  background: rgba(17, 20, 29, .42); backdrop-filter: blur(3px);
-}
-.donation-card {
-  position: relative; width: min(100%, 328px); max-height: calc(100vh - 32px); overflow: auto; padding: 22px 18px 18px;
-  border: 1px solid var(--line); border-radius: 22px; color: var(--ink); background: var(--surface);
-  box-shadow: 0 24px 60px rgba(13, 17, 28, .28);
-}
-.donation-close {
-  position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 28px; height: 28px; padding: 0;
-  border: 0; border-radius: 9px; color: var(--muted); background: var(--surface-soft); font-size: 22px; line-height: 1; cursor: pointer;
-}
-.donation-close:hover { color: var(--brand-strong); background: var(--brand-soft); }
-.donation-card h2 { padding-right: 24px; margin: 0 0 6px; font-size: 18px; line-height: 1.4; }
-.donation-description { margin: 0 0 16px; color: var(--muted); font-size: 12px; line-height: 1.6; }
-.donation-method { display: block; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-soft); }
-.donation-method-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.donation-method-heading h3 { margin: 0; font-size: 13px; font-weight: 650; }
-.donation-method-heading > span { color: var(--muted); font-size: 11px; }
-/* 保留完整赞赏码与四周空白，点击只在当前卡片内适度放大，再次点击还原。 */
-.donation-qr-frame { position: relative; display: block; overflow: hidden; width: 164px; max-width: 100%; aspect-ratio: 1; margin: 12px auto 8px; padding: 0; border: 0; border-radius: 10px; background: white; cursor: zoom-in; transition: width 180ms ease; }
-.donation-qr-frame.is-enlarged { width: 200px; cursor: zoom-out; }
-.donation-qr-frame img { position: absolute; width: 198.62%; max-width: none; height: auto; left: -49.14%; top: -25%; }
-.donation-method-note { margin: 0; text-align: center; color: var(--muted); font-size: 11px; line-height: 1.5; }
-.donation-kofi { display: flex; align-items: center; gap: 12px; margin-top: 10px; color: var(--ink); text-decoration: none; transition: border-color .16s, background-color .16s; }
-.donation-kofi:hover { border-color: var(--brand-strong); background: var(--brand-soft); }
-.donation-kofi-mark { display: grid; place-items: center; flex: 0 0 38px; height: 38px; border-radius: 12px; color: #147392; background: #dcf4fa; }
-.donation-kofi-mark svg { width: 22px; height: 22px; }
-.donation-kofi-copy { display: grid; flex: 1; gap: 3px; min-width: 0; }
-.donation-kofi-copy strong { display: flex; justify-content: space-between; font-size: 15px; }
-.donation-kofi-copy > span { font-size: 12px; line-height: 1.5; }
-.donation-kofi-copy small { color: var(--muted); font-size: 11px; }
-.donation-card a:focus-visible, .donation-card button:focus-visible { outline: 2px solid var(--brand-strong); outline-offset: 3px; }
-.donation-fade-enter-active, .donation-fade-leave-active { transition: opacity 160ms ease; }
-.donation-fade-enter-active .donation-card, .donation-fade-leave-active .donation-card { transition: transform 180ms ease, opacity 160ms ease; }
-.donation-fade-enter-from, .donation-fade-leave-to { opacity: 0; }
-.donation-fade-enter-from .donation-card, .donation-fade-leave-to .donation-card { opacity: 0; transform: translateY(8px) scale(.98); }
-@media (prefers-reduced-motion: reduce) {
-  .donation-qr-frame { transition: none; }
-  .donation-fade-enter-active, .donation-fade-leave-active, .donation-fade-enter-active .donation-card, .donation-fade-leave-active .donation-card { transition: none; }
-}
-
 .popup-drawer-modal { background: rgba(17, 20, 29, .48) !important; backdrop-filter: blur(2px); }
 /* 遮罩始终覆盖整页并拦截背景点击；只有内部抽屉跟随可见区域，根 popup 保持固有尺寸。 */
 .popup-drawer-modal[data-fluent-read-popup-viewport] {
@@ -610,8 +557,7 @@ footer > button { justify-self: end; }
 .language-pair .fluentread-select .el-select__selected-item { font-size: 11px; font-weight: 650; }
 .select-row > .fluentread-select { width: 180px; flex: 0 1 58%; }
 
-/* 高频操作保持直达：赞赏是紧凑图标，设置保留文字。 */
-:root[data-interface-skin] .popup-header .donation-button { width: 34px; min-width: 34px; height: 34px; padding: 0; }
+/* 高频操作保持直达：设置保留文字。 */
 .popup-header .header-actions { gap: 7px; }
 .popup-header .settings-button { min-width: 32px; padding: 0 7px; }
 .hero-card { box-shadow: none; }
@@ -659,7 +605,6 @@ footer > button { justify-self: end; }
 .popup-shell[data-interface-skin="default"] { background: var(--surface); }
 .popup-header { margin-bottom: 10px; }
 .popup-header .brand strong { font-size: 14px; }
-.popup-header .donation-button { color: var(--muted); background: var(--surface); border-color: var(--line); }
 .hero-card { border-radius: 14px; padding: 10px 12px; }
 .features { margin-top: 10px; }
 .features-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0; }
@@ -883,8 +828,6 @@ footer button { font-weight: 500; color: var(--muted); }
   :root .popup-shell[data-interface-skin] .translate-action > .fluentread-diagnostic .diagnostic-trigger { right: 0; }
   :root .popup-shell[data-interface-skin] .translate-action.has-section-translation > .fluentread-diagnostic .diagnostic-trigger { right: calc(var(--popup-secondary-action-width) + 6px); }
   :root .popup-shell .brand-icon-link { min-width: 46px; min-height: 46px; align-items: center; justify-content: center; }
-  :root .popup-shell .donation-close { width: 46px; height: 46px; }
-  :root .popup-shell .donation-card h2 { padding-right: 44px; }
   :root .popup-shell[data-interface-skin] .translate-action > .translate-button,
   :root .popup-shell[data-interface-skin] .translate-action > .section-translate-button {
     min-height: 46px;
@@ -947,11 +890,9 @@ footer button { font-weight: 500; color: var(--muted); }
 
 /* Firefox Android 的固定扩展容器可能报告 fine pointer；已确认的 Android 容器仍使用与 coarse 相同的触摸命中预算。 */
 :root[data-fluentread-android-popup] .popup-shell .brand-icon-link { min-width: 46px; min-height: 46px; align-items: center; justify-content: center; }
-:root[data-fluentread-android-popup] .popup-shell .donation-close { width: 46px; height: 46px; }
 :root[data-fluentread-android-popup] .popup-shell[data-interface-skin] .translate-action { --diagnostic-space: 50px; }
 :root[data-fluentread-android-popup] .popup-shell[data-interface-skin] .translate-action > .fluentread-diagnostic .diagnostic-trigger { right: 0; }
 :root[data-fluentread-android-popup] .popup-shell[data-interface-skin] .translate-action.has-section-translation > .fluentread-diagnostic .diagnostic-trigger { right: calc(var(--popup-secondary-action-width) + 6px); }
-:root[data-fluentread-android-popup] .popup-shell .donation-card h2 { padding-right: 44px; }
 :root[data-fluentread-android-popup] .popup-shell[data-interface-skin] .translate-action > .translate-button,
 :root[data-fluentread-android-popup] .popup-shell[data-interface-skin] .translate-action > .section-translate-button {
   min-height: 46px;

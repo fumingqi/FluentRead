@@ -1,7 +1,7 @@
 <!--
  @file src/app/options/OptionsApp.vue
  文件职责：实现扩展 Options 页的顶层布局，组织设置导航、全局搜索结果和学习中心入口，并把选中分区交给对应 feature UI。
- 主要内容：页面名称由 main 辅助技术标签提供，内容直接从统一的紧凑页内导航或表单开始，不再渲染重复页面标题；侧栏展示品牌与多语言宣传语；关于页以随界面语言显示产品名的宽幅品牌介绍、项目链接卡片、开源项目下方的微信交流按钮和独立赞赏区组织内容，联系二维码与赞赏码在当前页弹窗展示；渲染默认展开的分组侧栏、窄屏分类选择和全局搜索，搜索只在同次派生内复用原始查询的小写值和语言入口判断，语言恢复查询优先展示现有软件语言入口并定位选择控件；普通设置连续展示并提供顶部滚动定位导航，统计保留任务视图切换，智能高亮锚点及搜索入口随脚本版能力隐藏，服务目录使用完整工作区，复用 settingsNavigation 的项目解析/过滤逻辑，在 SettingsSections 与 LearningCenter 之间切换并重置内容区滚动，通过当前导航 getter 向迟到学习面板提供可见性，同步 URL hash 的深链接与前进后退导航，URL 目标仅接受当前分区登记的具体设置或可用分类并复用已有滚动定位，兼容模型用量迁入翻译统计后的旧链接；界面根节点注册在卸载时只释放本页面句柄。
+ 主要内容：页面名称由 main 辅助技术标签提供，内容直接从统一的紧凑页内导航或表单开始，不再渲染重复页面标题；侧栏展示品牌与多语言宣传语；关于页以随界面语言显示产品名的宽幅品牌介绍、项目链接卡片和开源项目下方的微信交流按钮组织内容，联系二维码在当前页弹窗展示；渲染默认展开的分组侧栏、窄屏分类选择和全局搜索，搜索只在同次派生内复用原始查询的小写值和语言入口判断，语言恢复查询优先展示现有软件语言入口并定位选择控件；普通设置连续展示并提供顶部滚动定位导航，统计保留任务视图切换，智能高亮锚点及搜索入口随脚本版能力隐藏，服务目录使用完整工作区，复用 settingsNavigation 的项目解析/过滤逻辑，在 SettingsSections 与 LearningCenter 之间切换并重置内容区滚动，通过当前导航 getter 向迟到学习面板提供可见性，同步 URL hash 的深链接与前进后退导航，URL 目标仅接受当前分区登记的具体设置或可用分类并复用已有滚动定位，兼容模型用量迁入翻译统计后的旧链接；界面根节点注册在卸载时只释放本页面句柄。
  模块边界：组件负责页面壳、导航状态和主题、界面皮肤根属性同步，不定义具体配置字段、不直接写 browser.storage，也不实现词汇仓库；设置表单、收藏与阅读记录业务由各 feature 组件拥有；学习栏目加载失败的重载动作在普通设置页保留栏目参数，页内设置只重载宿主文档。
 -->
 <template>
@@ -110,7 +110,7 @@
                   class="about-wechat-contact"
                   type="button"
                   aria-haspopup="dialog"
-                  @click="openQrPreview('contact')"
+                  @click="openQrPreview()"
                 >
                   <span class="about-link-icon"><UiIcon name="scan" :size="23" /></span>
                   <span class="about-link-copy"><strong>{{ t('options.aboutWechatContact') }}</strong><small>{{ t('options.aboutWechatContactDescription') }}</small></span>
@@ -118,29 +118,6 @@
                 </button>
               </div>
             </section>
-            <article class="about-panel about-support-panel">
-              <h3>{{ t('popup.donationTitle') }}</h3>
-              <p class="about-panel-description">{{ t('options.aboutThanks') }}</p>
-              <div class="about-support-options">
-                <button
-                  ref="approvePreviewTrigger"
-                  class="about-support-method about-support-wechat"
-                  data-support-method="wechat"
-                  type="button"
-                  :aria-label="t('options.aboutEnlargeCode')"
-                  :title="t('options.aboutEnlargeCode')"
-                  @click="openQrPreview('support')"
-                >
-                  <!-- 绑定表达式让模板编译器保留 public 路径，避免再打包一份带 hash 的同图。 -->
-                  <img class="about-support-qr" :src="getSupportImageUrl(approveUrl)" :alt="t('popup.donationCodeAlt')" width="1152" height="1152" />
-                  <span>{{ t('popup.donationWechat') }}</span>
-                </button>
-                <a class="about-support-method about-support-kofi-link" data-support-method="kofi" href="https://ko-fi.com/thinkstu" target="_blank" rel="noopener noreferrer">
-                  <span class="about-support-mark" aria-hidden="true"><UiIcon name="star" :size="26" /></span>
-                  <span class="about-support-kofi-label">{{ t('popup.donationKofi') }}<UiIcon name="external" :size="15" /></span>
-                </a>
-              </div>
-            </article>
           </div>
 
         </section>
@@ -155,23 +132,22 @@
 
     </main>
     <el-dialog
-      v-model="approvePreviewVisible"
-      class="about-qr-dialog"
-      :class="qrPreviewKind === 'contact' ? 'about-wechat-contact-dialog' : 'about-approve-dialog'"
-      :title="qrPreviewKind === 'contact' ? t('options.aboutWechatContact') : t('popup.donationWechat')"
+      v-model="qrPreviewVisible"
+      class="about-qr-dialog about-wechat-contact-dialog"
+      :title="t('options.aboutWechatContact')"
       width="min(560px, calc(100vw - 32px))"
       align-center
       :close-on-click-modal="true"
       :close-on-press-escape="true"
       destroy-on-close
-      @closed="restoreApprovePreviewFocus"
+      @closed="restoreQrPreviewFocus"
     >
       <img
-        class="about-approve-preview"
+        class="about-qr-preview"
         :src="qrPreviewUrl"
-        :alt="qrPreviewKind === 'contact' ? t('options.aboutWechatContactCodeAlt') : t('popup.donationCodeAlt')"
-        :width="qrPreviewKind === 'contact' ? 888 : 1152"
-        :height="qrPreviewKind === 'contact' ? 1131 : 1152"
+        :alt="t('options.aboutWechatContactCodeAlt')"
+        width="888"
+        height="1131"
       />
     </el-dialog>
   </div>
@@ -180,7 +156,7 @@
 <script setup lang="ts">
 import '@/src/features/settings/ui/components/settings-navigation.css'
 import UiIcon from '@/src/ui/components/UiIcon.vue'
-import {getSupportImageUrl, getContactImageUrl} from './aboutImages'
+import {getContactImageUrl} from './aboutImages'
 import {SETTINGS_TABBED_SECTION_IDS, settingsPagePanels, resolveSettingsPanel, filterNavigationItems, filterSettingsSearchTargets, isUiLanguageSearch, settingsSearchTargets} from '@/src/features/settings/model/navigation';
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import SettingsNavigationIcon from '@/src/features/settings/ui/SettingsNavigationIcon.vue'
@@ -214,22 +190,16 @@ let disposed = false
 const version = process.env.VUE_APP_VERSION
 const websiteUrl = 'https://read.thinkstu.com'
 const iconUrl = globalThis.__FLUENTREAD_ICON_DATA__ || '/icon/128.png'
-const approveUrl = globalThis.__FLUENTREAD_APPROVE_DATA__ || '/misc/approve.jpg'
-const approvePreviewVisible = ref(false)
+const qrPreviewVisible = ref(false)
 const qrPreviewUrl = ref<string>()
-const approvePreviewTrigger = ref<HTMLButtonElement | null>(null)
 const wechatContactTrigger = ref<HTMLButtonElement | null>(null)
-const qrPreviewKind = ref<'contact' | 'support'>('support')
-function openQrPreview(kind: 'contact' | 'support') {
-  const nextUrl = kind === 'contact' ? getContactImageUrl() : getSupportImageUrl(approveUrl)
-  qrPreviewKind.value = kind
-  qrPreviewUrl.value = nextUrl
-  approvePreviewVisible.value = true
+function openQrPreview() {
+  qrPreviewUrl.value = getContactImageUrl()
+  qrPreviewVisible.value = true
 }
-function restoreApprovePreviewFocus() {
+function restoreQrPreviewFocus() {
   if (disposed || activeSection.value !== 'settings-about') return
-  const trigger = qrPreviewKind.value === 'contact' ? wechatContactTrigger : approvePreviewTrigger
-  trigger.value?.focus({preventScroll: true})
+  wechatContactTrigger.value?.focus({preventScroll: true})
 }
 const aboutLinks = [
   {href: websiteUrl, icon: 'globe', label: 'options.aboutWebsite', description: 'options.aboutWebsiteDescription'},
@@ -509,7 +479,7 @@ async function revealActiveNavigation() {
 }
 
 watch(activeSection, () => {
-  approvePreviewVisible.value = false
+  qrPreviewVisible.value = false
   void revealActiveNavigation()
 })
 

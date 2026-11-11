@@ -19,7 +19,6 @@ import {
 } from 'element-plus'
 import {
   CircleCheckFilled,
-  Coffee,
   Download,
   Edit,
   InfoFilled,
@@ -67,7 +66,6 @@ const ELEMENT_COMPONENTS: Component[] = [
 
 const ELEMENT_ICONS: Record<string, Component> = {
   CircleCheckFilled,
-  Coffee,
   Download,
   Edit,
   InfoFilled,

@@ -2,7 +2,7 @@
  * @file src/features/settings/ui/settings-page.css
  * 弹窗呈现：设置页统一引入自有任务弹窗与确认框样式，标题、正文滚动和底部主操作复用同一组品牌与皮肤变量。
  * 文件职责：定义 Options 设置应用的全局页面骨架与 Element Plus 外观覆盖，包括分组侧边栏与搜索、直接置顶的页内导航、滚动工作区、设置卡片和特殊全宽业务视图。
- * 主要内容：样式引入共享 token，将品牌名称与小字宣传语排列在固定尺寸图标右侧；关于页使用宽幅品牌介绍，下方以项目链接卡片、跨两列微信交流按钮、独立赞赏区和自适应二维码弹窗利用内容空间；配置桌面与窄屏响应式布局、焦点态、导航分组、顶部同页定位导航、数字输入的独立操作区、支持多语言换行的表单与操作控件、服务/翻译中心视图、深色主题及固定标签列和控件列；触屏编辑输入使用 16px，避免 Safari 聚焦搜索或配置字段时自动放大并裁切操作按钮。
+ * 主要内容：样式引入共享 token，将品牌名称与小字宣传语排列在固定尺寸图标右侧；关于页使用宽幅品牌介绍，下方以项目链接卡片、跨两列微信交流按钮和自适应二维码弹窗利用内容空间；配置桌面与窄屏响应式布局、焦点态、导航分组、顶部同页定位导航、数字输入的独立操作区、支持多语言换行的表单与操作控件、服务/翻译中心视图、深色主题及固定标签列和控件列；触屏编辑输入使用 16px，避免 Safari 聚焦搜索或配置字段时自动放大并裁切操作按钮。
  * 模块边界：该文件只作用于扩展设置页面的整体布局，不承载配置逻辑或 feature 内部组件细节；分区专属样式在 settings-sections.css，通用设计变量位于 src/ui/styles/tokens.css。
  */
 @import "../../../ui/styles/tokens.css";
@@ -320,7 +320,7 @@ h1 { margin-bottom: 6px; font-size: 26px; line-height: 1.25; letter-spacing: -.0
 .settings-card .el-collapse-item__content { padding: 4px 16px 18px; }
 .settings-card .el-divider__text { color: var(--muted); font-size: 11px; }
 .sidebar-tagline { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
-/* 关于页保持宽幅内容布局；使用品牌信息、项目链接与赞赏区建立层次，不依赖固定视口高度。 */
+/* 关于页保持宽幅内容布局；使用品牌信息、项目链接与联系入口建立层次，不依赖固定视口高度。 */
 .about-page { display: grid; gap: 24px; width: 100%; min-width: 0; }
 .about-hero { display: grid; grid-template-columns: minmax(0, 1fr); padding: clamp(28px, 3vw, 48px); border: 1px solid var(--line); border-radius: 24px; background: radial-gradient(ellipse at top left, var(--brand-soft), transparent 70%), var(--surface); }
 .about-intro { min-width: 0; }
@@ -330,7 +330,7 @@ h1 { margin-bottom: 6px; font-size: 26px; line-height: 1.25; letter-spacing: -.0
 .about-identity strong { font-size: 24px; font-weight: 700; letter-spacing: -.03em; }
 .about-version { color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
 .about-intro h2 { max-width: 15em; margin: 0; color: var(--ink); font-size: clamp(28px, 2.6vw, 42px); font-weight: 700; line-height: 1.4; letter-spacing: -.035em; text-wrap: balance; overflow-wrap: anywhere; }
-.about-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(340px, 1fr); gap: 24px; align-items: stretch; }
+.about-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: stretch; }
 .about-panel { min-width: 0; padding: 28px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
 .about-panel h3 { margin: 0 0 10px; color: var(--ink); font-size: 20px; font-weight: 650; line-height: 1.5; }
 .about-panel-description { margin: 0 0 24px; color: var(--muted); font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
@@ -344,17 +344,10 @@ h1 { margin-bottom: 6px; font-size: 26px; line-height: 1.25; letter-spacing: -.0
 .about-links a > .fr-ui-icon, .about-links button > .fr-ui-icon { color: var(--muted); }
 .about-links a:hover, .about-links button:hover { border-color: var(--brand); background: var(--surface-soft); }
 .about-links a:hover strong, .about-links a:hover > .fr-ui-icon, .about-links button:hover strong, .about-links button:hover > .fr-ui-icon { color: var(--brand-strong); }
-.about-links a:focus-visible, .about-links button:focus-visible, .about-support-method:focus-visible { outline: 2px solid var(--brand-strong); outline-offset: 3px; }
-.about-support-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 12px; }
-.about-support-method { display: grid; align-content: center; justify-items: center; gap: 12px; min-width: 0; min-height: 212px; padding: 20px 16px; border: 1px solid var(--line); border-radius: 14px; color: var(--ink); background: var(--surface); font: inherit; font-size: 13px; font-weight: 550; line-height: 1.6; text-align: center; text-decoration: none; transition: border-color 150ms ease, background 150ms ease, color 150ms ease; }
-.about-support-method:hover { border-color: var(--brand); color: var(--brand-strong); background: var(--surface-soft); }
-.about-support-wechat { gap: 10px; padding: 12px; cursor: zoom-in; }
-.about-support-qr { display: block; width: 100%; height: auto; aspect-ratio: 1; border: 1px solid var(--line); border-radius: 10px; background: #fff; object-fit: contain; }
-.about-support-mark { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 18px; color: var(--brand-strong); background: var(--brand-soft); }
-.about-support-kofi-label { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+.about-links a:focus-visible, .about-links button:focus-visible { outline: 2px solid var(--brand-strong); outline-offset: 3px; }
 .about-qr-dialog { border-radius: 18px; background: var(--surface); }
 .about-qr-dialog .el-dialog__title { color: var(--ink); }
-.about-approve-preview { display: block; width: 100%; height: auto; max-height: calc(100dvh - 160px); object-fit: contain; border-radius: 12px; }
+.about-qr-preview { display: block; width: 100%; height: auto; max-height: calc(100dvh - 160px); object-fit: contain; border-radius: 12px; }
 @media (max-width: 1200px) and (min-width: 701px) {
   .about-hero { padding: 28px; }
   .about-grid { grid-template-columns: minmax(0, 1fr); }
@@ -375,8 +368,6 @@ h1 { margin-bottom: 6px; font-size: 26px; line-height: 1.25; letter-spacing: -.0
 @media (max-width: 480px) {
   .about-links { grid-template-columns: minmax(0, 1fr); }
   .about-links a, .about-links button { min-height: 88px; }
-  .about-support-options { grid-template-columns: minmax(0, 1fr); }
-  .about-support-method { min-height: 0; }
 }
 @media (max-width: 1050px) {
   body { min-width: 0; }

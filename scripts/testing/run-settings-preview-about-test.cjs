@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 回答风格与关于页专项：真实生产扩展、独立后台 Edge，只验证布局、品牌区和赞赏码放大，不调用模型或外部赞赏服务。
+// 回答风格与关于页专项：真实生产扩展、独立后台 Edge，只验证布局、品牌区和作者微信二维码预览，不调用模型或外部服务。
 'use strict';
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -86,7 +86,6 @@ const report = {ok: false, extensionDir, cases: [], screenshots: [], layout: [],
       await patch({uiLanguage: 'zh-CN', uiLanguageSetupCompleted: true, animations: false, theme: 'light'});
       assert.equal(await page.locator('.about-experience, .about-features, .about-feature').count(), 0);
       assert.equal(await page.locator('.about-links a').count(), 4);
-      assert.equal(await page.locator('.about-support-method').count(), 2);
       for (const theme of ['light', 'dark']) {
         await patch({theme});
         for (const width of [1440, 1024, 820, 390]) {
@@ -119,7 +118,7 @@ const report = {ok: false, extensionDir, cases: [], screenshots: [], layout: [],
       }
       await patch({theme: 'light'});
       await page.setViewportSize({width: 1440, height: 1000});
-      report.cases.push('removed experience card, full-width brand intro, four project links, two support entries, responsive light/dark layouts');
+      report.cases.push('removed experience card, full-width brand intro, four project links, single WeChat contact entry, responsive light/dark layouts');
 
       const contactTrigger = page.locator('.about-wechat-contact');
       const contactDialog = page.locator('.about-wechat-contact-dialog');
@@ -156,42 +155,6 @@ const report = {ok: false, extensionDir, cases: [], screenshots: [], layout: [],
       }
       await patch({theme: 'light'}); await page.setViewportSize({width: 1440, height: 1000});
       report.cases.push('two-column WeChat contact button below open source and feedback, exact supplied QR dimensions, keyboard and click opening, close/focus return, mobile light/dark');
-
-      const trigger = page.locator('.about-support-wechat');
-      const dialog = page.locator('.about-approve-dialog');
-      const open = async () => {
-        const pageCount = context.pages().length;
-        await trigger.click(); await dialog.waitFor({state: 'visible'});
-        await page.waitForFunction(() => !document.querySelector('.dialog-fade-enter-active'));
-        await dialog.locator('img').evaluate(image => image.decode());
-        assert.equal(page.url(), `${origin}/options.html#settings-about`);
-        assert.equal(context.pages().length, pageCount, 'opening the image does not create a tab');
-        const bounds = await dialog.boundingBox();
-        assert(bounds.x >= 0 && bounds.y >= 0 && bounds.x + bounds.width <= (await page.viewportSize()).width + 1 && bounds.y + bounds.height <= (await page.viewportSize()).height + 1, 'dialog stays in the viewport');
-        assert((await dialog.locator('img').boundingBox()).width > (await trigger.locator('img').boundingBox()).width, 'the preview enlarges the code');
-      };
-      const closed = async () => { await dialog.waitFor({state: 'hidden'}); await page.waitForFunction(() => document.activeElement === document.querySelector('.about-support-wechat')); };
-      await open(); await shot('wechat-preview-desktop');
-      await page.keyboard.press('Tab');
-      assert(await dialog.evaluate(el => el.contains(document.activeElement)), 'focus stays inside the dialog');
-      await page.keyboard.press('Escape'); await closed();
-      await open(); await dialog.locator('.el-dialog__headerbtn').click(); await closed();
-      await open(); await page.locator('.el-overlay-dialog').click({position: {x: 5, y: 5}}); await closed();
-      for (const theme of ['light', 'dark']) {
-        await patch({theme}); await page.setViewportSize({width: 390, height: 844});
-        await open(); await shot(`wechat-preview-mobile-${theme}`);
-        await page.keyboard.press('Escape'); await closed();
-      }
-      await page.setViewportSize({width: 1440, height: 1000});
-      for (const [locale, expected] of [['zh-CN', '放大微信赞赏码'], ['en-US', 'Enlarge the WeChat support code'], ['ja-JP', 'WeChat 支援コードを拡大'], ['ko-KR', 'WeChat 후원 코드 확대'], ['fr-FR', 'Agrandir le code de soutien WeChat'], ['ru-RU', 'Увеличить код поддержки WeChat'], ['es-ES', 'Ampliar el código de apoyo de WeChat']]) {
-        await patch({uiLanguage: locale});
-        await page.waitForFunction(expected => document.querySelector('.about-support-wechat')?.getAttribute('aria-label') === expected, expected);
-        assert.equal(await page.locator('.about-experience, .about-features, .about-feature').count(), 0);
-        const label = await trigger.getAttribute('aria-label');
-        assert(label && (locale === 'zh-CN' || !/[\u4e00-\u9fff]/u.test(label) || locale === 'ja-JP'), `translated trigger ${locale}`);
-        await open(); await page.keyboard.press('Escape'); await closed();
-      }
-      report.cases.push('in-page enlarged image, no new tab, focus trap and return, Escape/button/mask close, mobile light/dark, seven UI languages');
     }
     assert.equal(report.consoleErrors.length, 0, JSON.stringify(report.consoleErrors));
     report.ok = true;

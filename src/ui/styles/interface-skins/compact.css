@@ -43,7 +43,6 @@
   font-size: 9.5px;
 }
 
-:root[data-interface-skin="compact"] .donation-button,
 :root[data-interface-skin="compact"] .settings-button {
   min-width: 56px;
   height: 29px;

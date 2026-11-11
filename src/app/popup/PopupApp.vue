@@ -2,10 +2,10 @@
  @file src/app/popup/PopupApp.vue
  服务启用：默认服务提示和功能选择同步用户关闭状态，具体候选与旧选择保护由 PopupServices 执行。
  文件职责：实现浏览器 Popup 的主交互界面，连接当前标签页状态、翻译配置、可插拔皮肤、功能抽屉和高频操作，让现场开关与显示操作保持简短，将长期偏好引导到对应设置页，并为从划词抽屉打开的设置保留明确返回原网页的入口。
- 主要内容：Aa 按钮通过既有配置补丁保存全局译文字体偏好，以固定尺寸的衬线／无衬线图标、按下状态和紧凑操作提示反馈选择；保存失败时在翻译卡片内显示居中提示与重试按钮，重试时将焦点交回字体按钮；已有配置订阅同步其他页面的选择，导航不撤销已接受保存，关闭与失活只取消界面等待和迟到反馈；翻译卡片右下角的双语/仅译文图标与网站规则同行，两种按钮共用提示样式并支持 Escape 收起，模式回调随服务和操作变化失效；品牌官网入口保留稳定点击区域，内部图标在悬停和键盘聚焦时缓慢单次摇摆并遵循动画偏好，停留后显示可用 Escape 关闭的官网提示；全文翻译进度与完成状态由主按钮反馈，失败时在主操作内的预留区域呈现自助诊断入口，不挤动网站开关，配置修复定位当前服务，本地报告由用户预览并手动导出；在配置 hydration 后汇总翻译服务，直接展示网页默认服务与适用的配置模型；翻译与局部同排，主操作用短标题合并平台快捷键并保留加载状态，长组合在悬停提示中完整显示，站点开关保留独立按钮；赞赏码在当前弹窗内切换放大与还原，关闭后重置；悬停、划词与图片抽屉优先展示开关和操作示意，首次单屏语言选择独占内容，保存后立即显示主菜单；页面操作、抽屉和导航绑定活跃会话，等待期间独占请求，关闭和配置切换使旧回复失效；网站规则写前复验标签页，等待后台确认并呈现保存忙碌、暂停与失败反馈；Safari 免费池精确授权，焦点复查保留已就绪按钮，点击接管旧读取并重新确认实际许可，撤权取消待发操作，授权事件合并刷新，错误随语言资源更新；打开的实际 teleport 抽屉复用平台可见视口订阅跟随键盘与缩放，极矮区域由同一订阅派生紧凑布局，整页遮罩保持背景拦截，可见高度扩大时仅修正当前聚焦服务搜索被吸顶标题遮住的外框，关闭、缓存失活和卸载立即释放，根画布保持固有尺寸。
+ 主要内容：Aa 按钮通过既有配置补丁保存全局译文字体偏好，以固定尺寸的衬线／无衬线图标、按下状态和紧凑操作提示反馈选择；保存失败时在翻译卡片内显示居中提示与重试按钮，重试时将焦点交回字体按钮；已有配置订阅同步其他页面的选择，导航不撤销已接受保存，关闭与失活只取消界面等待和迟到反馈；翻译卡片右下角的双语/仅译文图标与网站规则同行，两种按钮共用提示样式并支持 Escape 收起，模式回调随服务和操作变化失效；品牌官网入口保留稳定点击区域，内部图标在悬停和键盘聚焦时缓慢单次摇摆并遵循动画偏好，停留后显示可用 Escape 关闭的官网提示；全文翻译进度与完成状态由主按钮反馈，失败时在主操作内的预留区域呈现自助诊断入口，不挤动网站开关，配置修复定位当前服务，本地报告由用户预览并手动导出；在配置 hydration 后汇总翻译服务，直接展示网页默认服务与适用的配置模型；翻译与局部同排，主操作用短标题合并平台快捷键并保留加载状态，长组合在悬停提示中完整显示，站点开关保留独立按钮；悬停、划词与图片抽屉优先展示开关和操作示意，首次单屏语言选择独占内容，保存后立即显示主菜单；页面操作、抽屉和导航绑定活跃会话，等待期间独占请求，关闭和配置切换使旧回复失效；网站规则写前复验标签页，等待后台确认并呈现保存忙碌、暂停与失败反馈；Safari 免费池精确授权，焦点复查保留已就绪按钮，点击接管旧读取并重新确认实际许可，撤权取消待发操作，授权事件合并刷新，错误随语言资源更新；打开的实际 teleport 抽屉复用平台可见视口订阅跟随键盘与缩放，极矮区域由同一订阅派生紧凑布局，整页遮罩保持背景拦截，可见高度扩大时仅修正当前聚焦服务搜索被吸顶标题遮住的外框，关闭、缓存失活和卸载立即释放，根画布保持固有尺寸。
  信息层级：服务摘要只保留当前服务与模型；悬停和划词的快捷开关与标题同排，独立快捷方案的作用范围仍明确说明，圈选快捷键只在操作示意中展示。
  缓存清理：每次清理拥有独立的可取消等待，失活或卸载释放旧等待，超时恢复按钮并提示结果未确认，后台确认清除但页面仍同步时展示中性状态；全局暂停不取消清理，旧回复不能覆盖新请求。
- 顶部入口：赞赏使用带提示的咖啡图标；支持的浏览器在其右侧提供带悬停和键盘提示的侧边栏图标，按配置从当前标签页或窗口打开 Chromium 面板，Firefox 直接使用原生侧栏；保留打开所需的用户手势，成功后关闭弹窗，失败保留重试入口。
+ 顶部入口：支持的浏览器提供带悬停和键盘提示的侧边栏图标，按配置从当前标签页或窗口打开 Chromium 面板，Firefox 直接使用原生侧栏；保留打开所需的用户手势，成功后关闭弹窗，失败保留重试入口。
  模块边界：组件编排 UI、浏览器导航事件与生命周期；页内面板通过授权来源固定发起网页，页面消息归属由 pageActions 管理，不实现翻译 provider、缓存存储或 content 挂载；公共配置由 services/config 管理；配置草稿复用共享编辑会话，保留 post 合并和关闭补丁交接。
 -->
 <!-- Popup 页面归 app 层所有；WXT 入口只负责调用挂载函数。 -->
@@ -68,13 +68,6 @@
         </div>
       </div>
       <div class="header-actions">
-        <ElTooltip :trigger="['hover', 'focus']" :trigger-keys="[]" :show-after="350" :hide-after="0"
-          :persistent="false" :show-arrow="false" :disabled="!popupContext.active.value || drawerVisible || donationVisible" placement="bottom" effect="light" popper-class="translation-tool-tooltip">
-          <template #content><span class="translation-tool-tooltip-copy">{{ t('popup.donationTitle') }}</span></template>
-          <button ref="donationTrigger" class="donation-button" type="button" :aria-label="t('popup.donationTitle')" :onClick="donationActions.open">
-            <Coffee />
-          </button>
-        </ElTooltip>
         <ElTooltip v-if="sidepanelAvailable" :trigger="['hover', 'focus']" :trigger-keys="[]" :show-after="350" :hide-after="0"
           :persistent="false" :show-arrow="false" :disabled="!popupContext.active.value || drawerVisible" placement="bottom" effect="light" popper-class="translation-tool-tooltip">
           <template #content><span class="translation-tool-tooltip-copy">{{ t('sidepanel.title') }}</span></template>
@@ -90,42 +83,6 @@
         </button>
       </div>
     </header>
-
-    <Transition name="donation-fade">
-      <div
-        v-if="donationVisible"
-        class="donation-overlay"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="donation-title"
-        :onClick="donationActions.overlay"
-      >
-        <section ref="donationCard" class="donation-card" tabindex="-1">
-          <button class="donation-close" type="button" :aria-label="t('popup.donationClose')" :onClick="donationActions.close">×</button>
-          <h2 id="donation-title">{{ t('popup.donationTitle') }}</h2>
-          <p class="donation-description">{{ t('popup.donationDescription') }}</p>
-          <section class="donation-method donation-wechat">
-            <div class="donation-method-heading"><h3>{{ t('popup.donationWechat') }}</h3><span>WeChat Support</span></div>
-            <button
-              class="donation-qr-frame"
-              :class="{ 'is-enlarged': donationQrEnlarged }"
-              type="button"
-              :aria-pressed="donationQrEnlarged"
-              :aria-label="t(donationQrEnlarged ? 'popup.donationRestoreCode' : 'popup.donationEnlargeCode')"
-              @click="donationQrEnlarged = !donationQrEnlarged"
-            >
-              <!-- 绑定表达式让模板编译器保留 public 路径，避免再打包一份带 hash 的同图。 -->
-              <img :src="'/misc/approve.jpg'" :alt="t('popup.donationCodeAlt')" width="1152" height="1152" />
-            </button>
-            <p class="donation-method-note">{{ t(donationQrEnlarged ? 'popup.donationScanEnlarged' : 'popup.donationScan') }}</p>
-          </section>
-          <a class="donation-method donation-kofi" href="https://ko-fi.com/thinkstu" target="_blank" rel="noopener noreferrer">
-            <span class="donation-kofi-mark" aria-hidden="true"><Coffee /></span>
-            <span class="donation-kofi-copy"><strong>Ko-fi <span aria-hidden="true">↗</span></strong><span>{{ t('popup.donationKofi') }}</span><small>ko-fi.com/thinkstu</small></span>
-          </a>
-        </section>
-      </div>
-    </Transition>
 
     <template v-for="moduleId in visiblePopupModuleOrder" :key="moduleId">
     <section v-if="moduleId === 'translation'" class="hero-card" data-popup-module="translation">
@@ -559,10 +516,6 @@ const currentSiteTranslationOnly = computed(() => Boolean(pageState.domain && co
 const currentPageDisplay = computed(() => resolveSiteTranslationDisplay(config.value, pageState.url));
 const pageTranslationLabel = computed(() => t(currentPdfSource.value ? 'document.pdfReading.openReader' : pageTranslated.value ? 'popup.restoreCurrentPage' : 'popup.translateCurrentPage'));
 const clearingCache = ref(false);
-const donationVisible = ref(false);
-const donationQrEnlarged = ref(false);
-const donationCard = shallowRef<HTMLElement | null>(null);
-const donationTrigger = shallowRef<HTMLButtonElement | null>(null);
 const pageDiagnostic = shallowRef<Diagnostic>();
 const pageResultStatus = ref<TranslationToolbarStatus>('idle');
 const translationInProgress = computed(() => translating.value || pageResultStatus.value === 'translating');
@@ -978,15 +931,6 @@ function finishFreePoolAction(generation: number): void {
   freePoolBusy.value = false;
   if (freePoolRefreshQueued) refreshFreePoolAccess(false, true);
 }
-const donationRevision = ref(0);
-watch(donationVisible, () => {donationRevision.value += 1}, {flush: 'sync'});
-
-const donationActions = computed(() => {
-  const current = popupContext.capture(), sequence = donationRevision.value;
-  const close = () => {if (current() && sequence === donationRevision.value) closeDonation()};
-  return {open: () => {if (current() && sequence === donationRevision.value) return openDonation()},
-    close, overlay: (event: MouseEvent) => {if (event.target === event.currentTarget) close()}};
-});
 const popupActions = computed(() => {
   const current = popupContext.capture();
   const bind = (run: () => void | Promise<void>) => () => {if (current()) return run()};
@@ -1081,7 +1025,7 @@ const drawerDisplayModes = computed(() => {
   return options.display.map(item => ({...item, disabled: !config.value.on || (config.value.service === 'google' && item.value === 0),
     choose: () => {if (current() && config.value.on && (config.value.service !== 'google' || item.value !== 0)) config.value.display = item.value}}));
 });
-watch(popupContext.active, enabled => {if (!enabled) {drawerVisible.value = false;donationVisible.value = false;notice.value = '';if (noticeTimer) clearTimeout(noticeTimer)}}, {flush: 'sync'});
+watch(popupContext.active, enabled => {if (!enabled) {drawerVisible.value = false;notice.value = '';if (noticeTimer) clearTimeout(noticeTimer)}}, {flush: 'sync'});
 // 只向自己实际 teleport 的遮罩提供内部抽屉定位变量；遮罩仍覆盖整页，键盘视口不参与根 popup 尺寸协商。
 watch([drawerVisible, drawerSurface, popupContext.active], ([visible, surface, active]) => {
   releaseDrawerViewport?.();
@@ -1175,24 +1119,6 @@ watch(() => config.value.interfaceFont, font => applyInterfaceFont(font));
 watch(popupUsesContentHeight, applyPopupHeightMode, {immediate: true});
 darkMode.onchange = () => { if (config.value.theme === 'auto') applyTheme('auto'); };
 
-async function openDonation() {
-  if (!popupContext.active.value || donationVisible.value) return;
-  const current = popupContext.capture(), before = document.activeElement;
-  donationQrEnlarged.value = false;
-  donationVisible.value = true;const sequence = donationRevision.value;
-  await nextTick();
-  if (current() && donationVisible.value && sequence === donationRevision.value
-    && (document.activeElement === before || document.activeElement === document.body)) {
-    donationCard.value?.querySelector<HTMLButtonElement>('.donation-close')?.focus({preventScroll: true});
-  }
-}
-function closeDonation() {
-  if (!popupContext.active.value || !donationVisible.value) return;
-  const before = document.activeElement, restore = donationCard.value?.contains(before) || before === document.body;
-  donationVisible.value = false;
-  donationQrEnlarged.value = false;
-  if (restore && donationTrigger.value?.isConnected) donationTrigger.value.focus({preventScroll: true});
-}
 function handlePopupKeydown(event: KeyboardEvent) {
   if (!popupContext.active.value) return;
   if (event.key === 'Escape') {
@@ -1208,21 +1134,6 @@ function handlePopupKeydown(event: KeyboardEvent) {
     pageFontTooltip.value?.hide();
     displayModeTooltip.value?.onClose();
     displayModeTooltip.value?.hide();
-  }
-  if (!donationVisible.value) return;
-  if (event.key === 'Escape') {
-    event.preventDefault();
-    closeDonation();
-  } else if (event.key === 'Tab') {
-    const controls = donationCard.value?.querySelectorAll<HTMLElement>('button, a[href]');
-    if (!controls?.length) return;
-    const first = controls[0];
-    const last = controls[controls.length - 1];
-    const outside = !donationCard.value?.contains(document.activeElement);
-    if (outside || (event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last)) {
-      event.preventDefault();
-      (event.shiftKey ? last : first).focus();
-    }
   }
 }
 function toggleAIContext() {

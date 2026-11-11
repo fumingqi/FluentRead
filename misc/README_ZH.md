@@ -79,13 +79,7 @@
 
 流畅阅读是一个开源项目，其持续开发离不开社区的慷慨支持。可以通过微信赞赏或 Ko-fi 自愿赞赏。
 
-<table>
-<tr><th>微信赞赏</th><th>Ko-fi · 国际支持</th></tr>
-<tr>
-<td align="center"><a href="./approve.jpg"><img src="./approve.jpg" width="220" alt="Thinkstu 的微信赞赏码" /></a><br />使用微信扫码，点击图片可查看原图。</td>
-<td align="center"><a href="https://ko-fi.com/thinkstu"><strong>通过 Ko-fi 支持 thinkstu ↗</strong></a><br /><br />ko-fi.com/thinkstu</td>
-</tr>
-</table>
+
 
 ## 致谢
 

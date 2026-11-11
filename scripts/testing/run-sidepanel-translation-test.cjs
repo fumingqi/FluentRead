@@ -286,26 +286,21 @@ async function main() {
             const layout = await popup.evaluate(() => {
                 const entry = document.querySelector('[data-testid="sidebar-translation"]');
                 const header = document.querySelector('.popup-header'), brand = header.querySelector('.brand');
-                const donation = header.querySelector('.donation-button'), settings = header.querySelector('.settings-button');
+                const settings = header.querySelector('.settings-button');
                 const rect = node => {const r = node.getBoundingClientRect();return {left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width};};
-                return {entry: rect(entry), header: rect(header), brand: rect(brand), donation: rect(donation), settings: rect(settings),
+                return {entry: rect(entry), header: rect(header), brand: rect(brand), settings: rect(settings),
                     withinHeader: header.contains(entry), inHero: Boolean(entry.closest('.hero-card')), text: entry.textContent.trim(),
-                    label: entry.getAttribute('aria-label'), donationText: donation.textContent.trim(), donationLabel: donation.getAttribute('aria-label'),
+                    label: entry.getAttribute('aria-label'),
                     hint: Boolean(document.querySelector('.first-use-hint')),
                     viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth};
             });
             assert(layout.withinHeader && !layout.inHero && !layout.text && !layout.hint && layout.label === '侧边栏翻译', JSON.stringify(layout));
-            assert(!layout.donationText && layout.donationLabel === '支持流畅阅读' && layout.donation.width <= 40, JSON.stringify(layout));
-            assert(layout.brand.right <= layout.donation.left + 1 && layout.donation.right <= layout.entry.left + 1 && layout.entry.right <= layout.settings.left + 1, JSON.stringify(layout));
+            assert(layout.brand.right <= layout.entry.left + 1 && layout.entry.right <= layout.settings.left + 1, JSON.stringify(layout));
             assert(layout.settings.right <= layout.header.right + 1 && layout.entry.top >= layout.header.top && layout.entry.bottom <= layout.header.bottom + 1, JSON.stringify(layout));
             assert(layout.scrollWidth <= layout.viewport + 1, JSON.stringify(layout));
             report.cases.push({name: `compact popup entry: ${skin}`, layout, passed: true});
         }
         await patch({interfaceSkin: 'default'});await popup.locator('.popup-shell[data-interface-skin="default"]').waitFor();
-        await popup.locator('.donation-button').hover();
-        const donationTip = popup.locator('.translation-tool-tooltip:visible').filter({hasText: '支持流畅阅读'});await donationTip.waitFor();
-        await popup.locator('.donation-button').click();await popup.locator('.donation-overlay').waitFor();await popup.locator('.donation-close').click();
-        report.cases.push({name: 'donation icon tooltip and dialog', passed: true});
         await popup.locator('[data-testid="sidebar-translation"]').hover();
         const tip = popup.locator('.translation-tool-tooltip:visible').filter({hasText: '侧边栏翻译'});await tip.waitFor();assert.equal((await tip.innerText()).trim(), '侧边栏翻译');
         const tipShot = path.join(artifactsDir, 'popup-sidebar-tooltip.png');await popup.locator('.popup-shell').screenshot({path: tipShot});report.screenshots.push(tipShot);

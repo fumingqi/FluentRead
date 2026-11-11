@@ -80,13 +80,6 @@ Report bugs and propose changes through [Issues](https://github.com/FluentRead/F
 
 FluentRead is an open-source project whose continued development is made possible by the generous support of its community. Voluntary contributions are welcome through either service.
 
-<table>
-<tr><th>WeChat Support</th><th>Ko-fi · International</th></tr>
-<tr>
-<td align="center"><a href="./misc/approve.jpg"><img src="./misc/approve.jpg" width="220" alt="Thinkstu’s WeChat support code" /></a><br />Scan with WeChat. Click the image to enlarge.</td>
-<td align="center"><a href="https://ko-fi.com/thinkstu"><strong>Support thinkstu on Ko-fi ↗</strong></a><br /><br />ko-fi.com/thinkstu</td>
-</tr>
-</table>
 
 ## Acknowledgments
 

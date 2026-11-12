@@ -147,7 +147,7 @@
           <template #content>
             <p>{{ translateLegacy('留空时使用本机默认地址；局域网主机请填写完整的 Chat Completions 地址') }}</p>
             <code>{{ DEFAULT_OLLAMA_ENDPOINT }}</code>
-            <p>{{ translateLegacy('浏览器扩展访问 Ollama 前，需要在启动 Ollama 时设置环境变量 OLLAMA_ORIGINS=*，否则会被跨域拒绝') }}</p>
+            <p>{{ translateLegacy('扩展会自动移除发往 Ollama 的 Origin 请求头，通常无需额外设置；若仍被拒绝，请在启动 Ollama 时设置环境变量 OLLAMA_ORIGINS=*') }}</p>
           </template>
         </FieldHelp>
       </div>

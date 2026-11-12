@@ -5,6 +5,11 @@
  * 模块边界：只处理纯配置，不访问浏览器或网络；网络规则的安装由 platform 和后台组合根负责。
  */
 export const MAX_REQUEST_HEADER_RULES = 100;
+/**
+ * 后台组合根为内置供应商规则（B 站官方 API、本地 Ollama）预留的额外槽位。
+ * 这些规则不计入用户的一百项名额，同步器需要在归一化时一并放行。
+ */
+export const REQUEST_HEADER_RULE_RESERVED_SLOTS = 2;
 export interface RequestHeaderRule {
     domain: string;
     removeOrigin: boolean;
@@ -30,11 +35,11 @@ export function normalizeRequestHeaderDomain(value: unknown): string | null {
     }
 }
 
-// 后台组合根可额外保留一个内置供应商规则；用户配置仍使用默认的一百项上限。
+// 后台组合根可额外保留内置供应商规则；用户配置仍使用默认的一百项上限。
 export function normalizeRequestHeaderRules(value: unknown, maximum = MAX_REQUEST_HEADER_RULES): RequestHeaderRule[] {
     if (!Array.isArray(value)) return [];
     const rules = new Map<string, RequestHeaderRule>();
-    for (const item of value.slice(0, Math.min(MAX_REQUEST_HEADER_RULES + 1, maximum))) {
+    for (const item of value.slice(0, Math.min(MAX_REQUEST_HEADER_RULES + REQUEST_HEADER_RULE_RESERVED_SLOTS, maximum))) {
         if (!item || typeof item !== 'object') continue;
         const domain = normalizeRequestHeaderDomain(item.domain);
         if (!domain) continue;

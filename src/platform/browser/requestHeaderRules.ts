@@ -5,7 +5,11 @@
  * 模块边界：不读配置或选择服务；后台注入配置快照和浏览器端口，不修改宿主请求、响应头或 CORS。
  */
 import type {DeclarativeNetRequest} from 'webextension-polyfill';
-import {MAX_REQUEST_HEADER_RULES, normalizeRequestHeaderRules} from '@/src/core/config/requestHeaders';
+import {
+    MAX_REQUEST_HEADER_RULES,
+    normalizeRequestHeaderRules,
+    REQUEST_HEADER_RULE_RESERVED_SLOTS,
+} from '@/src/core/config/requestHeaders';
 
 export const REQUEST_HEADER_RULE_START = 2_763_000;
 export type RequestHeaderRulesPort = Pick<DeclarativeNetRequest.Static, 'getDynamicRules' | 'updateDynamicRules'>;
@@ -15,7 +19,7 @@ export function createRequestHeaderRulesSynchronizer(api: RequestHeaderRulesPort
     let tail: Promise<void> = Promise.resolve();
     return {
         sync(value: unknown): Promise<void> {
-            const entries = normalizeRequestHeaderRules(value, MAX_REQUEST_HEADER_RULES + 1);
+            const entries = normalizeRequestHeaderRules(value, MAX_REQUEST_HEADER_RULES + REQUEST_HEADER_RULE_RESERVED_SLOTS);
             const key = JSON.stringify(entries);
             const result = tail.then(async () => {
                 if (applied === key) return;
@@ -27,7 +31,7 @@ export function createRequestHeaderRulesSynchronizer(api: RequestHeaderRulesPort
                 }
                 const current = await api.getDynamicRules();
                 const removeRuleIds = current.filter(rule => rule.id >= REQUEST_HEADER_RULE_START
-                    && rule.id < REQUEST_HEADER_RULE_START + MAX_REQUEST_HEADER_RULES + 1).map(rule => rule.id);
+                    && rule.id < REQUEST_HEADER_RULE_START + MAX_REQUEST_HEADER_RULES + REQUEST_HEADER_RULE_RESERVED_SLOTS).map(rule => rule.id);
                 const addRules: DeclarativeNetRequest.Rule[] = enabled.map((entry, index) => ({
                     id: REQUEST_HEADER_RULE_START + index,
                     priority: 2, // 用户明确移除优先于图片读取等临时来源头补充规则。

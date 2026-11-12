@@ -224,7 +224,7 @@ The bridge accepts text-only, nonstreaming requests and disables Agent tools, fi
 
 ## Local models
 
-Ollama needs installation, a running server, and a downloaded model. Select **Ollama (local)**, enter the downloaded model name, and use the default `http://127.0.0.1:11434` without a key. Other devices or ports need a full `/v1/chat/completions` URL. Allow the extension’s origin in Ollama’s server settings.
+Ollama needs installation, a running server, and a downloaded model. Select **Ollama (local)**, enter the downloaded model name, and use the default `http://127.0.0.1:11434` without a key. The extension removes the `Origin` header from background requests, so you normally do not need to change Ollama’s server settings. Other devices or ports need a full `/v1/chat/completions` URL. If requests are still rejected (for example, when the browser does not support `declarativeNetRequest`), set `OLLAMA_ORIGINS=*` as described by Ollama to allow the extension’s origin.
 
 For slower computers, set the service’s **Request limits → Entire service → Custom** concurrency to **1**. Only that service’s translation requests are local; dictionaries and read-aloud may still use the network. See the [privacy policy](/en/guide/privacy).
 

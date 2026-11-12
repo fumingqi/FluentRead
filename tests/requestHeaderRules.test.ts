@@ -49,11 +49,12 @@ describe('按域名请求头移除名单', () => {
 
     it('规则只修改本扩展对精确域名的 XHR，分别移除所选头，保留其他规则', async () => {
         const port = api();
-        port.getDynamicRules.mockResolvedValue([{id: 1}, {id: 2_001_460}, {id: REQUEST_HEADER_RULE_START + 99}, {id: REQUEST_HEADER_RULE_START + 101}]);
+        port.getDynamicRules.mockResolvedValue([{id: 1}, {id: 2_001_460}, {id: REQUEST_HEADER_RULE_START + 99},
+            {id: REQUEST_HEADER_RULE_START + 101}, {id: REQUEST_HEADER_RULE_START + 102}]);
         const sync = createRequestHeaderRulesSynchronizer(port, 'own-extension-id');
         await sync.sync([origin, referer, {domain: 'disabled.example', removeOrigin: false, removeReferer: false}]);
         const update = port.updateDynamicRules.mock.calls[0][0];
-        expect(update.removeRuleIds).toEqual([REQUEST_HEADER_RULE_START + 99]);
+        expect(update.removeRuleIds).toEqual([REQUEST_HEADER_RULE_START + 99, REQUEST_HEADER_RULE_START + 101]);
         expect(update.addRules).toHaveLength(2);
         expect(update.addRules[0]).toMatchObject({id: REQUEST_HEADER_RULE_START, priority: 2,
             action: {type: 'modifyHeaders', requestHeaders: [{header: 'Origin', operation: 'remove'}]},
@@ -111,14 +112,17 @@ describe('按域名请求头移除名单', () => {
     });
 });
 
-it('内置 B站规则不挤掉用户的一百项配置，并清理额外规则编号', async () => {
+it('内置供应商规则不挤掉用户的一百项配置，并清理额外规则编号', async () => {
     const port = api();
-    port.getDynamicRules.mockResolvedValue([{id: REQUEST_HEADER_RULE_START + 100}]);
-    const entries = [{domain: 'index-translate.bilibili.com', removeOrigin: true, removeReferer: false},
-        ...Array.from({length: 100}, (_, i) => ({domain: `user-${i}.example`, removeOrigin: false, removeReferer: true}))];
+    port.getDynamicRules.mockResolvedValue([{id: REQUEST_HEADER_RULE_START + 101}]);
+    const entries = [
+        {domain: 'index-translate.bilibili.com', removeOrigin: true, removeReferer: false},
+        {domain: '127.0.0.1', removeOrigin: true, removeReferer: false},
+        ...Array.from({length: 100}, (_, i) => ({domain: `user-${i}.example`, removeOrigin: false, removeReferer: true})),
+    ];
     await createRequestHeaderRulesSynchronizer(port, 'own').sync(entries);
     const update = port.updateDynamicRules.mock.calls[0][0];
-    expect(update.addRules).toHaveLength(101);
-    expect(update.addRules[100].condition.regexFilter).toContain('user-99');
-    expect(update.removeRuleIds).toEqual([REQUEST_HEADER_RULE_START + 100]);
+    expect(update.addRules).toHaveLength(102);
+    expect(update.addRules[101].condition.regexFilter).toContain('user-99');
+    expect(update.removeRuleIds).toEqual([REQUEST_HEADER_RULE_START + 101]);
 });

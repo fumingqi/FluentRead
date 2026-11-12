@@ -213,7 +213,7 @@ describe('audit48 A controlled public boundaries', () => {
         expect(translate).not.toHaveBeenCalled();
     });
 
-    it('startup replaces obsolete request-header rules with the scoped built-in rule without an HTTP request', async () => {
+    it('startup replaces obsolete request-header rules with the scoped built-in rules without an HTTP request', async () => {
         const gate = deferred<void>(); state.ready = gate.promise;
         const api = {getDynamicRules: vi.fn(async () => [{id: 2_763_000}, {id: 42}]), updateDynamicRules: vi.fn(async () => undefined)};
         const fetch = vi.fn(); vi.stubGlobal('fetch', fetch);
@@ -229,6 +229,15 @@ describe('audit48 A controlled public boundaries', () => {
                 action: {type: 'modifyHeaders', requestHeaders: [{header: 'Origin', operation: 'remove'}]},
                 condition: {
                     regexFilter: '^https?://index-translate\\.bilibili\\.com(?::[0-9]+)?/',
+                    initiatorDomains: ['controlled'],
+                    resourceTypes: ['xmlhttprequest'],
+                },
+            }, {
+                id: 2_763_001,
+                priority: 2,
+                action: {type: 'modifyHeaders', requestHeaders: [{header: 'Origin', operation: 'remove'}]},
+                condition: {
+                    regexFilter: '^https?://127\\.0\\.0\\.1(?::[0-9]+)?/',
                     initiatorDomains: ['controlled'],
                     resourceTypes: ['xmlhttprequest'],
                 },

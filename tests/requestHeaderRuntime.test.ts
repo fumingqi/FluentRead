@@ -6,13 +6,16 @@
  */
 import {afterEach, describe, expect, it, vi} from 'vitest';
 const mocks = vi.hoisted(() => ({
-    config: {requestHeaderRules: [] as Array<{domain: string; removeOrigin: boolean; removeReferer: boolean}>},
+    config: {
+        requestHeaderRules: [] as Array<{domain: string; removeOrigin: boolean; removeReferer: boolean}>,
+        proxy: {} as Record<string, string>,
+    },
     subscribe: vi.fn(),
 }));
 vi.mock('@/src/services/config/store', () => ({config: mocks.config, configReady: Promise.resolve(), subscribeConfig: mocks.subscribe}));
 import {installRequestHeaderRuntime} from '@/src/app/background/requestHeaderRuntime';
 import {runtimeFetch, setRuntimeFetch} from '@/src/platform/http/runtime';
-afterEach(() => {setRuntimeFetch(); vi.unstubAllGlobals(); vi.restoreAllMocks(); mocks.subscribe.mockReset();});
+afterEach(() => {setRuntimeFetch(); vi.unstubAllGlobals(); vi.restoreAllMocks(); mocks.subscribe.mockReset(); mocks.config.proxy = {};});
 
 describe('后台请求头同步屏障', () => {
     it('用真实扩展 origin 的 hostname 安装规则，网络等待安装；配置更新与删除后立即同步', async () => {
@@ -29,7 +32,11 @@ describe('后台请求头同步屏障', () => {
         await vi.waitFor(() => expect(api.updateDynamicRules).toHaveBeenCalledOnce());
         expect(fetch).not.toHaveBeenCalled();
         expect(api.updateDynamicRules.mock.calls[0][0].addRules[0].condition.initiatorDomains).toEqual(['own-uuid']);
-        expect(api.updateDynamicRules.mock.calls[0][0].addRules).toHaveLength(2);
+        expect(api.updateDynamicRules.mock.calls[0][0].addRules).toHaveLength(3);
+        expect(api.updateDynamicRules.mock.calls[0][0].addRules[1]).toMatchObject({
+            action: {type: 'modifyHeaders', requestHeaders: [{header: 'Origin', operation: 'remove'}]},
+            condition: {regexFilter: '^https?://127\\.0\\.0\\.1(?::[0-9]+)?/'},
+        });
         release();
         await request;
         expect(fetch).toHaveBeenCalledWith('https://api.example.com/v1', {method: 'POST'});
@@ -37,7 +44,33 @@ describe('后台请求头同步屏障', () => {
         api.getDynamicRules.mockResolvedValue([{id: 2_763_000}]);
         mocks.subscribe.mock.calls[0][0]();
         await runtimeFetch('https://api.example.com/v1');
-        expect(api.updateDynamicRules).toHaveBeenLastCalledWith({removeRuleIds: [2_763_000], addRules: [expect.objectContaining({condition: expect.objectContaining({regexFilter: '^https?://index-translate\\.bilibili\\.com(?::[0-9]+)?/'})})]});
+        expect(api.updateDynamicRules).toHaveBeenLastCalledWith({removeRuleIds: [2_763_000], addRules: [
+            expect.objectContaining({condition: expect.objectContaining({regexFilter: '^https?://index-translate\\.bilibili\\.com(?::[0-9]+)?/'})}),
+            expect.objectContaining({condition: expect.objectContaining({regexFilter: '^https?://127\\.0\\.0\\.1(?::[0-9]+)?/'})}),
+        ]});
+    });
+
+    it('按 Ollama 实际服务地址安装 Origin 移除规则，地址无效时跳过', async () => {
+        const api = {getDynamicRules: vi.fn().mockResolvedValue([]), updateDynamicRules: vi.fn().mockResolvedValue(undefined)};
+        vi.stubGlobal('browser', {runtime: {getURL: () => 'chrome-extension://own/'}, declarativeNetRequest: api});
+        const fetch = vi.fn().mockResolvedValue(new Response('ok'));
+        vi.stubGlobal('fetch', fetch);
+        mocks.config.proxy = {ollama: 'http://192.168.1.20:11434/v1/chat/completions'};
+        installRequestHeaderRuntime();
+        await runtimeFetch('http://192.168.1.20:11434/v1/chat/completions');
+        expect(api.updateDynamicRules.mock.calls[0][0].addRules[1]).toMatchObject({
+            priority: 2,
+            action: {type: 'modifyHeaders', requestHeaders: [{header: 'Origin', operation: 'remove'}]},
+            condition: {regexFilter: '^https?://192\\.168\\.1\\.20(?::[0-9]+)?/', resourceTypes: ['xmlhttprequest']},
+        });
+        mocks.config.proxy = {ollama: 'not a url'};
+        api.getDynamicRules.mockResolvedValue([{id: 2_763_001}]);
+        mocks.subscribe.mock.calls[0][0]();
+        await runtimeFetch('http://192.168.1.20:11434/v1/chat/completions');
+        expect(api.updateDynamicRules).toHaveBeenLastCalledWith({removeRuleIds: [2_763_001], addRules: [
+            expect.objectContaining({condition: expect.objectContaining({regexFilter: '^https?://index-translate\\.bilibili\\.com(?::[0-9]+)?/'})}),
+        ]});
+        expect(fetch).toHaveBeenCalledTimes(2);
     });
 
     it('安装失败时阻止网络并重试；后台订阅的失败只输出固定诊断', async () => {

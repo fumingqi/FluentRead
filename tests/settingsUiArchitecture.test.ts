@@ -4,7 +4,7 @@ import { parseHTML } from 'linkedom'
 import { describe, expect, it } from 'vitest'
 
 function source(path: string): string {
-  return readFileSync(resolve(process.cwd(), path), 'utf8')
+  return readFileSync(resolve(process.cwd(), path), 'utf8').replace(/\r\n?/gu, '\n')
 }
 
 function sourceBody(path: string): string {
@@ -182,7 +182,6 @@ describe('options UI composition architecture', () => {
     const sections = source('src/features/settings/ui/SettingsSections.vue')
 
     expect(optionsApp).toContain('<KeepAlive>')
-    expect(optionsApp).toContain('v-else-if="activeSection === \'settings-about\'"')
     expect(optionsApp).toContain('v-if="userscriptUnavailableSection"')
     expect(optionsApp).toContain('v-else\n            :is="activeSection === \'settings-vocabulary\' ? LearningCenter : SettingsSections"')
     expect(optionsApp).toContain(':key="activeSection === \'settings-vocabulary\' ? \'learning\' : \'settings\'"')

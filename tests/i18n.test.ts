@@ -997,7 +997,7 @@ describe('界面 i18n 契约', () => {
       '当前网站栏目',
       '当前网站的始终翻译和禁用扩展开关。',
       '底部信息栏',
-      '显示翻译统计、开源项目入口和清除缓存操作。',
+      '显示翻译统计和清除缓存操作。',
     ];
     for (const language of ['en-US', 'ja-JP', 'ko-KR', 'fr-FR', 'ru-RU', 'es-ES'] as const) {
       for (const source of interfaceAppearanceCopy) {
@@ -1067,7 +1067,7 @@ describe('i18n 全量界面扫描', () => {
       'contextMenu.groupPlain', 'contextMenu.standalone', 'contextMenu.withShortcut', 'contextMenu.withLanguage', 'contextMenuSettings.withReason']);
     // “Original” 在法语与西班牙语中拼写与英文相同，视频字幕菜单的短标签沿用该词。
     const videoOriginalLabels = ['video.modeOriginal', 'video.downloadOriginalShort'];
-    const frenchCognates = new Set(['learning.memoryNote', 'document.progressSegments', 'document.pageCount', 'document.pageNumber', 'options.aboutDocs', 'settings.advanced.animations', 'settings.advanced.translationLoadingStyle.minimal.label',
+    const frenchCognates = new Set(['learning.memoryNote', 'document.progressSegments', 'document.pageCount', 'document.pageNumber', 'settings.advanced.animations', 'settings.advanced.translationLoadingStyle.minimal.label',
       // Style、Format、Original 同样是自然的法语短标签。
       'shareCard.style', 'shareCard.format', 'shareCard.original',
       // Page、Zoom 与 Original 也是 PDF 阅读器中自然的法语短标签。
@@ -1289,7 +1289,7 @@ it('中文展示使用流畅阅读，首启七语品牌与正式目录一致并�
         'language.settingsDescription', 'language.onboardingWelcomeTitle', 'language.onboardingDescription',
         'language.onboardingSuccessDescription', 'video.panelAriaLabel', 'video.translationOverlayAriaLabel',
         'video.buttonAriaLabel', 'video.globalDisabled', 'metadata.optionsTitle', 'metadata.popupTitle',
-        'metadata.documentTitle', 'document.fileLimitNote', 'options.aboutThanks', 'popup.donationTitle',
+        'metadata.documentTitle', 'document.fileLimitNote', 'popup.donationTitle',
         'shareCard.showBrand', 'learning.collection.fileReadFailed', 'settings.cloud.privacyWebDavStorage',
     ];
     for (const key of localizedKeys) {

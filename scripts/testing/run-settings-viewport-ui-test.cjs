@@ -107,7 +107,7 @@ async function main() {
     await check('video-deep-link-reload', true);
     for (const [width, height] of [[1024, 700], [820, 600], [390, 720], [1440, 480]]) {
       await page.setViewportSize({width, height});
-      await navigate('settings-about');
+      await navigate('settings-data');
       await check(`viewport-${width}-last-menu`);
       const visible = await page.locator('nav button.active').evaluate(e => {
         const r = e.getBoundingClientRect(), n = e.closest('nav').getBoundingClientRect();

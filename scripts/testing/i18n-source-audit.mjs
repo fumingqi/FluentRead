@@ -20,7 +20,7 @@ export function collectUiSourceCopy(root) {
         const source = value.trim().replace(/\s+/gu, ' ');
         if (!/[\u3400-\u9fff]/u.test(source) || source.startsWith('[FluentRead]')) return;
         const locations = sources.get(source) || new Set();
-        locations.add(path.relative(root, file));
+        locations.add(path.relative(root, file).split(path.sep).join('/'));
         sources.set(source, locations);
     }
     function script(source, file) {
@@ -166,7 +166,7 @@ export function collectUiSourceCopy(root) {
             const file = path.join(directory, item.name);
             if (item.isDirectory()) walk(file);
             else if (item.name.endsWith('.vue')) {
-                files.push(path.relative(root, file));
+                files.push(path.relative(root, file).split(path.sep).join('/'));
                 const {descriptor, errors} = parse(fs.readFileSync(file, 'utf8'));
                 if (errors.length) throw new Error(`${file}: ${errors.join(', ')}`);
                 if (descriptor.template) template(parseTemplate(descriptor.template.content), file);

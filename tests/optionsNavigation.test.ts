@@ -41,7 +41,7 @@ describe('options navigation view-model', () => {
       },
       {
         label: '系统与数据',
-        items: ['settings-advanced', 'settings-data', 'settings-about'],
+        items: ['settings-advanced', 'settings-data'],
       },
     ])
     expect(navigationItems.map((item) => item.label)).toEqual([
@@ -60,7 +60,6 @@ describe('options navigation view-model', () => {
       '翻译统计',
       '高级选项',
       '备份与恢复',
-      '关于流畅阅读',
     ])
     expect(resolveNavigationItem('settings-translation')).toMatchObject({
       group: '基础配置',

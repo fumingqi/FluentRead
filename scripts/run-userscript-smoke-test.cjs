@@ -646,7 +646,7 @@ async function main() {
         'settings-image-translation', 'settings-video', 'settings-writing', 'settings-translation-stats',
       ];
       const visitedSections = [];
-      for (const id of [...unavailableSections, 'settings-vocabulary', 'settings-data', 'settings-about']) {
+      for (const id of [...unavailableSections, 'settings-vocabulary', 'settings-data']) {
         await page.evaluate((section) => {
           window.__fluentReadUserscriptSettingsShadow.querySelector(`button[data-section="${section}"]`).click();
         }, id);

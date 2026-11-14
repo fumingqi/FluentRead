@@ -320,55 +320,6 @@ h1 { margin-bottom: 6px; font-size: 26px; line-height: 1.25; letter-spacing: -.0
 .settings-card .el-collapse-item__content { padding: 4px 16px 18px; }
 .settings-card .el-divider__text { color: var(--muted); font-size: 11px; }
 .sidebar-tagline { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
-/* 关于页保持宽幅内容布局；使用品牌信息、项目链接与联系入口建立层次，不依赖固定视口高度。 */
-.about-page { display: grid; gap: 24px; width: 100%; min-width: 0; }
-.about-hero { display: grid; grid-template-columns: minmax(0, 1fr); padding: clamp(28px, 3vw, 48px); border: 1px solid var(--line); border-radius: 24px; background: radial-gradient(ellipse at top left, var(--brand-soft), transparent 70%), var(--surface); }
-.about-intro { min-width: 0; }
-.about-identity { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
-.about-logo { flex: none; width: 64px; height: 64px; border-radius: 18px; }
-.about-identity > div { display: grid; min-width: 0; gap: 6px; }
-.about-identity strong { font-size: 24px; font-weight: 700; letter-spacing: -.03em; }
-.about-version { color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
-.about-intro h2 { max-width: 15em; margin: 0; color: var(--ink); font-size: clamp(28px, 2.6vw, 42px); font-weight: 700; line-height: 1.4; letter-spacing: -.035em; text-wrap: balance; overflow-wrap: anywhere; }
-.about-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: stretch; }
-.about-panel { min-width: 0; padding: 28px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
-.about-panel h3 { margin: 0 0 10px; color: var(--ink); font-size: 20px; font-weight: 650; line-height: 1.5; }
-.about-panel-description { margin: 0 0 24px; color: var(--muted); font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
-.about-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.about-links a, .about-links button { display: grid; grid-template-columns: 40px minmax(0, 1fr) 16px; align-items: center; gap: 12px; min-width: 0; min-height: 104px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; color: var(--ink); background: var(--surface); font: inherit; text-align: start; text-decoration: none; transition: border-color 160ms ease, background 160ms ease; }
-.about-wechat-contact { grid-column: 1 / -1; cursor: pointer; }
-.about-link-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; color: var(--brand-strong); background: var(--brand-soft); }
-.about-link-copy { display: grid; min-width: 0; gap: 6px; overflow-wrap: anywhere; }
-.about-link-copy strong { font-size: 14px; font-weight: 600; line-height: 1.5; }
-.about-link-copy small { color: var(--muted); font-size: 12px; line-height: 1.6; }
-.about-links a > .fr-ui-icon, .about-links button > .fr-ui-icon { color: var(--muted); }
-.about-links a:hover, .about-links button:hover { border-color: var(--brand); background: var(--surface-soft); }
-.about-links a:hover strong, .about-links a:hover > .fr-ui-icon, .about-links button:hover strong, .about-links button:hover > .fr-ui-icon { color: var(--brand-strong); }
-.about-links a:focus-visible, .about-links button:focus-visible { outline: 2px solid var(--brand-strong); outline-offset: 3px; }
-.about-qr-dialog { border-radius: 18px; background: var(--surface); }
-.about-qr-dialog .el-dialog__title { color: var(--ink); }
-.about-qr-preview { display: block; width: 100%; height: auto; max-height: calc(100dvh - 160px); object-fit: contain; border-radius: 12px; }
-@media (max-width: 1200px) and (min-width: 701px) {
-  .about-hero { padding: 28px; }
-  .about-grid { grid-template-columns: minmax(0, 1fr); }
-  .about-panel { padding: 24px; }
-}
-@media (max-width: 900px) {
-  .about-intro h2 { max-width: none; }
-}
-@media (max-width: 700px) {
-  .about-page { gap: 16px; }
-  .about-hero { padding: 24px; border-radius: 18px; }
-  .about-identity { margin-bottom: 22px; }
-  .about-logo { width: 52px; height: 52px; border-radius: 14px; }
-  .about-identity strong { font-size: 22px; }
-  .about-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .about-panel { padding: 24px; border-radius: 18px; }
-}
-@media (max-width: 480px) {
-  .about-links { grid-template-columns: minmax(0, 1fr); }
-  .about-links a, .about-links button { min-height: 88px; }
-}
 @media (max-width: 1050px) {
   body { min-width: 0; }
   .sidebar { flex-basis: 210px; width: 210px; }
@@ -518,7 +469,6 @@ h1 { margin-bottom: 6px; font-size: 26px; line-height: 1.25; letter-spacing: -.0
 .settings-app .search-results b { flex: none; }
 .settings-app .topbar, .settings-app .settings-page-tabs { width: 100%; max-width: var(--settings-content-width); margin-right: auto; margin-left: auto; }
 .settings-app .workspace:has(.services-view), .settings-app .workspace:has(.translation-center-view), .settings-app .workspace:has(.vocabulary-view) { --settings-content-width: 100%; }
-.settings-app .workspace:has(.about-page) { --settings-content-width: 1320px; }
 .settings-app .settings-card:not(.services-view):not(.translation-center-view):not(.vocabulary-view) > * { width: 100%; max-width: var(--settings-content-width); margin-right: auto; margin-left: auto; }
 .settings-app .settings-card { padding: 0 2px 24px; scrollbar-gutter: stable; overscroll-behavior-y: contain; }
 .settings-app .settings-card.services-view, .settings-app .settings-card.translation-center-view { width: calc(100% + 64px); margin-right: -32px; margin-left: -32px; padding: 0; scrollbar-gutter: auto; }

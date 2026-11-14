@@ -250,16 +250,9 @@ describe('settings center CLI remaining current UI contracts', () => {
             [{color: 'invalid', image: 'none'}],
         ]) expect(resolveSolidBackground(layers)).toBeNull();
     });
-    it('keeps the About contact QR and omits donation promotion', () => {
-        const about = productionSource('src/app/options/OptionsApp.vue');
-        expect(about).toContain('class="about-wechat-contact"');
-        expect(about).toContain('class="about-qr-preview"');
-        expect(about).not.toContain('about-support');
-        expect(about).not.toContain('ko-fi.com');
-        const css = cssDeclarations('src/features/settings/ui/settings-page.css', '.about-qr-preview');
-        expect(css.width).toBe('100%');
-        expect(css.height).toBe('auto');
-        expect(css['object-fit']).toBe('contain');
+    it('keeps the options page free of donation promotion', () => {
+        const options = productionSource('src/app/options/OptionsApp.vue');
+        expect(options).not.toContain('ko-fi.com');
     });
 
     it('keeps all five current quick features in the matrix after explicitly adding appearance', () => {

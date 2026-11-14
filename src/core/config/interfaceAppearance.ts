@@ -337,7 +337,7 @@ export const popupModuleOptions: readonly PopupModuleOption[] = [
   {
     id: 'footer',
     label: '底部信息栏',
-    description: '显示翻译统计、开源项目入口和清除缓存操作',
+    description: '显示翻译统计和清除缓存操作',
     labelKey: 'settings.interface.popupLayout.modules.footer.label',
     descriptionKey: 'settings.interface.popupLayout.modules.footer.description',
     visibilityKey: 'popupFooter',

@@ -26,6 +26,5 @@ const icons: Record<string, string> = {
   'settings-model-usage': 'chart',
   'settings-advanced': 'sliders',
   'settings-data': 'history',
-  'settings-about': 'info',
  }
 </script>

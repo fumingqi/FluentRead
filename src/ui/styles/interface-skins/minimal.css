@@ -375,12 +375,6 @@
   border-radius: 0;
 }
 
-:root[data-interface-skin="minimal"] .opensource-link {
-  min-height: 20px;
-  padding: 1px 4px;
-  border-radius: 6px;
-}
-
 /* Drawer 和弹层沿用同一套平面层级，避免打开快捷设置后突然回到厚重卡片。 */
 :root[data-interface-skin="minimal"] .popup-drawer {
   padding-right: 16px;

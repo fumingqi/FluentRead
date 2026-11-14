@@ -16,7 +16,7 @@ vi.mock('@/src/app/popup/PopupOnboarding.vue', () => ({default: {}}));
 import {mountPopupApp} from '@/src/app/popup';
 
 function source(path: string): string {
-    return readFileSync(resolve(process.cwd(), path), 'utf8');
+    return readFileSync(resolve(process.cwd(), path), 'utf8').replace(/\r\n?/gu, '\n');
 }
 
 type TemplateRoot = NonNullable<NonNullable<SFCDescriptor['template']>['ast']>;
@@ -341,7 +341,7 @@ describe('popup feature visibility', () => {
         expect(popup).not.toContain('class="eyebrow features-eyebrow"');
         expect(popup).toContain('data-testid="popup-version"');
         expect(popup).toContain("browser.runtime.getManifest().version");
-        expect(source('src/app/popup/popup.css')).not.toContain('.opensource-link span { display: none; }');
+        expect(popup).not.toContain('opensource-link');
         expect(popup).not.toContain("activeDrawer === 'video'");
         expect(popup).not.toContain("activeDrawer === 'area'");
     });

@@ -28,11 +28,8 @@ import * as functionWordData from '@/src/core/language/functionWordData';
 import {createUserscriptCharacterDataCompressionPlugin} from '@/userscript/characterDataPlugin';
 import {createUserscriptFrancDataCompressionPlugin} from '@/userscript/francDataPlugin';
 import {createUserscriptTldtsDataCompressionPlugin} from '@/userscript/tldtsDataPlugin';
-import {createUserscriptAboutImagesCompressionPlugin} from '@/userscript/aboutImagesPlugin';
 import {createUserscriptServiceBrandIconsCompressionPlugin} from '@/userscript/serviceBrandIconsPlugin';
 import originalServiceBrandPaths from '@/src/ui/assets/serviceBrandPaths.json';
-import {getSupportImageUrl as getNormalSupportImageUrl, getContactImageUrl as getNormalContactImageUrl} from '@/src/app/options/aboutImages';
-import ordinaryContactAsset from '@/src/app/options/assets/wechat-contact.jpg';
 import {inflateWithPako as inflateBundledFrancData} from '@/userscript/pakoBundled';
 import {inflateBytesWithPako as inflateBundledTldtsData, decodeUtf8WithPako as decodeBundledTldtsLabels} from '@/userscript/pakoBundled';
 import {data as lockedFrancData} from 'franc-min/data.js';
@@ -345,12 +342,10 @@ describe('userscript build gzip portability', () => {
         expect(gunzipSync(first)).toEqual(before);
     });
 
-    it('never enlarges actual static assets versus the former gzip default and saves bytes on an existing asset', () => {
+    it('never enlarges actual static assets versus the former gzip default and saves bytes on existing catalogs', () => {
         const inputs = [
             Buffer.from(JSON.stringify(zhCNMessages)),
             Buffer.from(JSON.stringify(UI_LANGUAGE_BUNDLES['en-US'])),
-            ...['public/misc/approve.jpg', 'src/app/options/assets/wechat-contact.jpg'].map(file =>
-                Buffer.from(`data:image/jpeg;base64,${readFileSync(resolve(process.cwd(), file)).toString('base64')}`)),
         ];
         let savedBytes = 0;
         for (const input of inputs) {
@@ -2232,225 +2227,6 @@ describe('standalone locked public and private suffix pure-data encoding', () =>
         expect(restored.labelText).toBe(locked.labelText);
         expect(restored.rulesRoot).toBe(locked.rulesRoot); expect(restored.exceptionsRoot).toBe(locked.exceptionsRoot);
     });
-});
-
-describe('standalone About images at explicit use boundaries', () => {
-    const root = process.cwd();
-    const helperId = realpathSync(resolve(root, 'src/app/options/aboutImages.ts'));
-    const originalImage = (relative: string) => readFileSync(resolve(root, relative));
-    const originals = {
-        support: originalImage('public/misc/approve.jpg'),
-        contact: originalImage('src/app/options/assets/wechat-contact.jpg'),
-    };
-    const expectedUrl = (kind: keyof typeof originals) => 'data:image/jpeg;base64,' + originals[kind].toString('base64');
-    const createPlugin = (enabled = true, fixtureRoot = root) => createUserscriptAboutImagesCompressionPlugin(fixtureRoot, enabled) as unknown as {
-        name: string; load(id: string): string | null;
-    };
-    async function loadAccessors(decoder = vi.fn(inflateBundledFrancData), standalone = false) {
-        const plugin = createUserscriptAboutImagesCompressionPlugin(root, true, standalone) as unknown as {load(id: string): string | Promise<string>};
-        const source = await plugin.load(helperId);
-        const {transformWithEsbuild} = await import('vite-userscript');
-        const compiled = await transformWithEsbuild(source, 'about-images-owner.js', {format: 'cjs', target: 'es2018'});
-        const module = {exports: {} as {getSupportImageUrl(normal: string): string; getContactImageUrl(): string}};
-        const decode = vi.fn(decodeUserscriptData);
-        const hostImage = {controlledHostImage: true};
-        const realm = {module, exports: module.exports, Uint8Array, atob,
-            __FLUENTREAD_APPROVE_DATA__: hostImage,
-            require: (id: string) => {
-                if (id === '@/userscript/dataEncoding') return {decodeUserscriptData: decode};
-                expect(id).toBe('@/userscript/pakoRuntime'); return {inflateWithPako: decoder};
-            }};
-        runInNewContext(compiled.code, realm, {timeout: 5_000});
-        expect(decoder).not.toHaveBeenCalled();
-        expect(decode).not.toHaveBeenCalled();
-        expect(realm.__FLUENTREAD_APPROVE_DATA__).toBe(hostImage);
-        return {api: module.exports, decoder, decode, realm, hostImage, source};
-    }
-    function assertImage(actual: string, kind: keyof typeof originals) {
-        expect(actual).toBe(expectedUrl(kind));
-        expect(Buffer.from(actual.slice('data:image/jpeg;base64,'.length), 'base64')).toEqual(originals[kind]);
-    }
-
-    it('restores both actual standalone images exactly and never enlarges the compact gzip', async () => {
-        const h = await loadAccessors(undefined, true);
-        const bytes = encodedDataBytes(h.source);
-        expect(bytes).toHaveLength(2);
-        for (const [index, kind] of (['support', 'contact'] as const).entries()) {
-            const input = Buffer.from(expectedUrl(kind));
-            expect(gunzipSync(bytes[index])).toEqual(input);
-            expect(bytes[index].length).toBeLessThanOrEqual(gzipUserscriptBuildData(input, 9, true).length);
-        }
-        expect(h.decoder).not.toHaveBeenCalled(); expect(h.decode).not.toHaveBeenCalled();
-        assertImage(h.api.getSupportImageUrl('normal'), 'support');
-        assertImage(h.api.getContactImageUrl(), 'contact');
-        h.api.getSupportImageUrl('normal'); h.api.getContactImageUrl();
-        expect(h.decoder).toHaveBeenCalledTimes(2); expect(h.decode).toHaveBeenCalledTimes(2);
-        // 两张真实图片各经过一次构建压缩，保留独立于全局与生产超时的有限测试预算。
-    }, 15_000);
-
-    it('propagates an isolated standalone image compressor failure', async () => {
-        const fixture = mkdtempSync(resolve(tmpdir(), 'fluentread-about-worker-failure-'));
-        try {
-            mkdirSync(resolve(fixture, 'src/app/options/assets'), {recursive: true});
-            mkdirSync(resolve(fixture, 'public/misc'), {recursive: true});
-            mkdirSync(resolve(fixture, 'userscript'), {recursive: true});
-            const entry = resolve(fixture, 'src/app/options/aboutImages.ts');
-            writeFileSync(entry, 'export {}');
-            writeFileSync(resolve(fixture, 'public/misc/approve.jpg'), Buffer.alloc(50_000, 1));
-            writeFileSync(resolve(fixture, 'src/app/options/assets/wechat-contact.jpg'), Buffer.alloc(50_000, 2));
-            writeFileSync(resolve(fixture, 'userscript/zopfliBuildWorker.cjs'), "throw new Error('controlled image worker failure');");
-            const plugin = createUserscriptAboutImagesCompressionPlugin(fixture, true, true) as unknown as {load(id: string): Promise<string>};
-            await expect(plugin.load(realpathSync(entry))).rejects.toThrow('controlled image worker failure');
-        } finally {rmSync(fixture, {recursive: true, force: true});}
-    });
-
-    it('keeps the compact image gzip when worker candidates are larger', async () => {
-        vi.resetModules();
-        const gzipModule = await import('@/userscript/buildGzip');
-        const worker = vi.spyOn(gzipModule, 'gzipLargeStandaloneUserscriptData')
-            .mockImplementation(async data => Buffer.alloc(data.byteLength + 1));
-        try {
-            const {createUserscriptAboutImagesCompressionPlugin: createImages} = await import('@/userscript/aboutImagesPlugin');
-            const plugin = createImages(root, true, true) as unknown as {load(id: string): Promise<string>};
-            const bytes = encodedDataBytes(await plugin.load(helperId));
-            for (const [index, kind] of (['support', 'contact'] as const).entries()) {
-                const input = Buffer.from(expectedUrl(kind));
-                expect(Buffer.from(bytes[index])).toEqual(gzipUserscriptBuildData(input, 9, true));
-                expect(gunzipSync(bytes[index])).toEqual(input);
-            }
-            expect(worker).toHaveBeenCalledTimes(2);
-        } finally {worker.mockRestore(); vi.resetModules();}
-    });
-
-    it('does not emit an image module if the second isolated compressor fails', async () => {
-        vi.resetModules();
-        const gzipModule = await import('@/userscript/buildGzip');
-        const worker = vi.spyOn(gzipModule, 'gzipLargeStandaloneUserscriptData')
-            .mockImplementationOnce(async data => Buffer.alloc(data.byteLength + 1))
-            .mockRejectedValueOnce(new Error('controlled second image failure'));
-        try {
-            const {createUserscriptAboutImagesCompressionPlugin: createImages} = await import('@/userscript/aboutImagesPlugin');
-            const plugin = createImages(root, true, true) as unknown as {load(id: string): Promise<string>};
-            await expect(plugin.load(helperId)).rejects.toThrow('controlled second image failure');
-            expect(worker).toHaveBeenCalledTimes(2);
-        } finally {worker.mockRestore(); vi.resetModules();}
-    });
-
-    it('keeps the ordinary caller snapshot and existing contact asset route', () => {
-        for (const normal of ['/misc/approve.jpg', 'controlled-captured-data-url', '']) {
-            expect(getNormalSupportImageUrl(normal)).toBe(normal);
-        }
-        expect(getNormalContactImageUrl()).toBe(ordinaryContactAsset);
-    });
-
-    it.each(['support-first', 'contact-first'] as const)('keeps import lazy and restores complete original JPEGs independently with %s', async order => {
-        const h = await loadAccessors();
-        const support = () => h.api.getSupportImageUrl('controlled-normal-url');
-        const contact = () => h.api.getContactImageUrl();
-        const first = order === 'support-first' ? support : contact;
-        const second = order === 'support-first' ? contact : support;
-        assertImage(first(), order === 'support-first' ? 'support' : 'contact');
-        expect(h.decoder).toHaveBeenCalledTimes(1);expect(h.decode).toHaveBeenCalledTimes(1);
-        first();first();expect(h.decoder).toHaveBeenCalledTimes(1);
-        assertImage(second(), order === 'support-first' ? 'contact' : 'support');
-        expect(h.decoder).toHaveBeenCalledTimes(2);expect(h.decode).toHaveBeenCalledTimes(2);
-        assertImage(support(), 'support');assertImage(contact(), 'contact');
-        expect(h.decoder).toHaveBeenCalledTimes(2);
-        expect(h.realm.__FLUENTREAD_APPROVE_DATA__).toBe(h.hostImage);
-    });
-
-    it.each(['support', 'contact'] as const)('does not publish a failed %s restoration or affect the other successful cache', async kind => {
-        const decoder = vi.fn(inflateBundledFrancData).mockImplementationOnce(() => {throw new Error('controlled restore failure');});
-        const h = await loadAccessors(decoder);
-        const selected = () => kind === 'support' ? h.api.getSupportImageUrl('normal') : h.api.getContactImageUrl();
-        const other = () => kind === 'support' ? h.api.getContactImageUrl() : h.api.getSupportImageUrl('normal');
-        expect(selected).toThrow('controlled restore failure');expect(decoder).toHaveBeenCalledTimes(1);
-        assertImage(other(), kind === 'support' ? 'contact' : 'support');
-        other();expect(decoder).toHaveBeenCalledTimes(2);
-        assertImage(selected(), kind);expect(decoder).toHaveBeenCalledTimes(3);
-        selected();other();expect(decoder).toHaveBeenCalledTimes(3);
-        expect(h.decode).toHaveBeenCalledTimes(3);
-    });
-
-    it('defaults to disabled without reading nonexistent helper or image files', () => {
-        const plugin = createUserscriptAboutImagesCompressionPlugin('/unavailable-about-images-root');
-        if (typeof plugin.load !== 'function') throw new Error('Expected image load hook');
-        expect(Reflect.apply(plugin.load, plugin, [helperId])).toBeNull();
-        expect(createPlugin(false, '/unavailable-about-images-root').load(helperId)).toBeNull();
-    });
-
-    it.each([
-        ['raw', helperId + '?raw'], ['proxy', helperId + '?commonjs-proxy'],
-        ['virtual', '\0' + helperId], ['another-module', resolve(root, 'src/app/options/other.ts')],
-        ['similar-path', resolve(root, 'fake-src/app/options/aboutImages.ts')],
-    ])('leaves the %s route and disabled module untouched', (_label, id) => {
-        expect(createPlugin().load(id)).toBeNull();
-        expect(createPlugin(false).load(id)).toBeNull();
-    });
-
-    it.each([
-        ['ordinary', '0', '0', false], ['standalone', '1', '0', true],
-        ['greasy-fork', '0', '1', false], ['standalone-and-greasy', '1', '1', false],
-    ] as const)('uses the actual %s config plugin, Vite alias resolution and asset path', async (_label, standalone, greasy, enabled) => {
-        vi.stubEnv('FLUENTREAD_USERSCRIPT_STANDALONE', standalone);
-        vi.stubEnv('FLUENTREAD_USERSCRIPT_GREASYFORK_SOURCE', greasy);
-        vi.stubEnv('FLUENTREAD_USERSCRIPT_VENDOR_URL', 'https://fixture.invalid/vendor.js');
-        vi.stubEnv('FLUENTREAD_USERSCRIPT_DATA_URL', 'https://fixture.invalid/data.js');
-        const fixture = mkdtempSync(resolve(tmpdir(), 'fluentread-about-images-owner-'));
-        try {
-            vi.resetModules();
-            const {default: configuration} = await import('@/userscript/vite.config');
-            const config = configuration as unknown as import('vite-userscript').UserConfig;
-            const plugin = (config.plugins as import('vite-userscript').Plugin[]).find(item => item.name === 'compress-standalone-about-images');
-            expect(plugin).toBeDefined();
-            const entryPath = resolve(fixture, 'entry.mjs');
-            writeFileSync(entryPath, 'import {getSupportImageUrl,getContactImageUrl} from "@/src/app/options/aboutImages"; globalThis.aboutImagesOwner={getSupportImageUrl,getContactImageUrl};');
-            const {build} = await import('vite-userscript');
-            const result = await build({root, configFile: false, publicDir: false, logLevel: 'silent',
-                plugins: [plugin!], resolve: config.resolve,
-                build: {...config.build, write: false, outDir: resolve(fixture, 'unused-output'),
-                    lib: {entry: entryPath, name: 'AboutImagesOwner', formats: ['iife']},
-                    rollupOptions: {output: {inlineDynamicImports: true}}}});
-            const outputs = Array.isArray(result) ? result : [result];
-            expect(outputs).toHaveLength(1);
-            if (!('output' in outputs[0])) throw new Error('Expected actual Rollup output');
-            expect(outputs[0].output).toHaveLength(1);
-            const chunk = outputs[0].output[0];
-            if (chunk.type !== 'chunk') throw new Error('Expected complete image owner entry');
-            expect(chunk.imports).toEqual([]);expect(chunk.dynamicImports).toEqual([]);
-            const decode = vi.fn(atob);
-            const realm = {aboutImagesOwner: undefined as any, atob: decode, Uint8Array, ArrayBuffer};
-            runInNewContext(chunk.code, realm, {timeout: 5_000});
-            expect(decode).not.toHaveBeenCalled();
-            const api = realm.aboutImagesOwner;
-            const normalUrl = 'controlled-captured-normal-url';
-            const support = api.getSupportImageUrl(normalUrl);
-            assertImage(api.getContactImageUrl(), 'contact');
-            if (enabled) {
-                assertImage(support, 'support');expect(decode).not.toHaveBeenCalled();
-                expect(chunk.code).not.toContain(expectedUrl('support'));
-                expect(chunk.code).not.toContain(expectedUrl('contact'));
-                expect(chunk.moduleIds).not.toContain(resolve(root, 'src/app/options/assets/wechat-contact.jpg'));
-            } else {
-                expect(support).toBe(normalUrl);expect(decode).not.toHaveBeenCalled();
-                expect(chunk.moduleIds).toContain(resolve(root, 'src/app/options/assets/wechat-contact.jpg'));
-            }
-            api.getSupportImageUrl('other-normal-url');api.getContactImageUrl();
-            expect(decode).not.toHaveBeenCalled();
-            const bootstrapPlugin = (config.plugins as import('vite-userscript').Plugin[]).find(item => item.name === 'bundle-userscript-css') as unknown as {
-                generateBundle: {handler: Function};
-            };
-            await Reflect.apply(bootstrapPlugin.generateBundle.handler, {emitFile: vi.fn()}, [{}, {'entry.js': chunk}]);
-            expect(chunk.code).not.toMatch(/globalThis\.__FLUENTREAD_APPROVE_DATA__\s*=/u);
-            if (enabled) {
-                expect(chunk.code).not.toContain(expectedUrl('support'));
-                expect(chunk.code).not.toContain(expectedUrl('contact'));
-            }
-        } finally {
-            rmSync(fixture, {recursive: true, force: true});
-            vi.unstubAllEnvs();vi.resetModules();
-        }
-    }, 30_000);
 });
 
 describe('standalone service brand paths at actual icon use', () => {

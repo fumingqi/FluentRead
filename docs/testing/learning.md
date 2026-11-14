@@ -145,5 +145,5 @@ node scripts/testing/run-writing-assistant-test.cjs \
 
 以上是验收范围，不能视为新版浏览器验证已经通过。以本次实际执行报告记录的用例、窗口位置、前台状态和截图为准。正文与流式模型均为合成测试数据，不登录真实 Gmail/GitHub，不发送邮件或评论；夹具结果不能作为真实账号页面或外部 AI 服务质量的证明，旧版入口菜单、快捷键和写作网站名单的测试结果也不能代替新版流程验证。
 
-仅调整回答风格布局与关于页时，使用 `node scripts/testing/run-settings-preview-about-test.cjs --extension-dir .output/chrome-mv3 --playwright-root <path> --focus-safe-helper <path> --artifacts-dir /private/tmp/fluentread-settings-preview-about`。该专项在独立后台 Edge 中检查桌面左侧预览、右侧设置，1024/820/390px 的预览在上、设置在下及无横向溢出；验证实时预览、关于页已移除核心体验介绍且品牌区铺满、开源项目和问题反馈下方跨两列微信交流按钮和联系二维码弹窗、赞赏码在当前页弹窗放大、关闭按钮/遮罩/Escape 关闭与焦点返回、窄屏浅深色和七种界面语言。可用 `--suite about` 或 `--suite writing` 限定本次相关范围；关于页专项还检查 1440/1024/820/390px 的浅深色布局。它不请求模型、不打开外部赞赏服务，也不代表 Firefox 实机验证。
+仅调整回答风格布局时，使用 `node scripts/testing/run-settings-preview-writing-test.cjs --extension-dir .output/chrome-mv3 --playwright-root <path> --focus-safe-helper <path> --artifacts-dir /private/tmp/fluentread-settings-preview-writing`。该专项在独立后台 Edge 中检查桌面左侧预览、右侧设置，1024/820/390px 的预览在上、设置在下及无横向溢出，并验证角色切换后的实时预览。它不请求模型，也不代表 Firefox 实机验证。
 

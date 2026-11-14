@@ -5,7 +5,7 @@ const {guardBrowserClose} = require('./owned-browser-close.cjs');
 /**
  * @file scripts/testing/run-lazy-options-ui-test.cjs
  * 文件职责：在隔离 Edge 中验证 Options 按需分区挂载、深链接、配置持久化以及 Popup 基础交互。
- * 主要内容：确认首次通用设置不创建未访问的服务、视频、界面、数据和学习组件，依次访问这些分区后返回仍保留实例；验证布尔开关快速关闭、重开和 Popup 跨页面同步，并覆盖服务选择器、抽屉、About 互斥显示与异步深链接；shortcut-lifecycle 子集单独验证首次划词录制、取消/清除、离开分区与窄屏对话框。
+ * 主要内容：确认首次通用设置不创建未访问的服务、视频、界面、数据和学习组件，依次访问这些分区后返回仍保留实例；验证布尔开关快速关闭、重开和 Popup 跨页面同步，并覆盖服务选择器、抽屉与异步深链接；shortcut-lifecycle 子集单独验证首次划词录制、取消/清除、离开分区与窄屏对话框。
  * 模块边界：只操作本次临时 profile 和真实扩展页面，不请求真实翻译服务，不连接用户浏览器，不替代完整设置中心回归。
  */
 
@@ -337,7 +337,6 @@ async function visible(locator) {
         learning: document.querySelector('#settings-vocabulary') === null,
         usage: document.querySelector('#settings-model-usage') === null,
       },
-      visibleAbout: [...document.querySelectorAll('#settings-about')].filter(node => getComputedStyle(node).display !== 'none').length,
       visibleGeneral: Boolean(document.querySelector('#settings-general')?.getClientRects().length),
     }));
     assert.deepEqual(initialState.hiddenSelectors, {
@@ -348,7 +347,6 @@ async function visible(locator) {
       learning: true,
       usage: true,
     });
-    assert.equal(initialState.visibleAbout, 0);
     assert.equal(initialState.visibleGeneral, true);
     report.lazyMount.initial = initialState;
     report.cases.push('first-general-mount-excludes-unvisited-sections');
@@ -419,21 +417,6 @@ async function visible(locator) {
     await page.locator('#settings-vocabulary').evaluate(node => { node.dataset.retentionProbe = 'visited-learning'; });
     report.lazyMount.learning = {mounted: true};
     report.cases.push('learning-loads-on-first-navigation');
-
-    await navigateOptions(page, 'settings-about');
-    const aboutState = await page.evaluate(() => ({
-      aboutCount: document.querySelectorAll('#settings-about').length,
-      aboutVisible: [...document.querySelectorAll('#settings-about')].filter(node => Boolean(node.getClientRects().length)).length,
-      generalVisible: [...document.querySelectorAll('#settings-general')].filter(node => Boolean(node.getClientRects().length)).length,
-      activeId: document.querySelector('nav button[aria-current="page"]')?.getAttribute('data-section'),
-    }));
-    assert.equal(aboutState.aboutCount, 1);
-    assert.equal(aboutState.aboutVisible, 1);
-    assert.equal(aboutState.generalVisible, 0);
-    assert.equal(aboutState.activeId, 'settings-about');
-    report.cases.push('about-is-the-only-visible-content-branch');
-    report.deepLink = true;
-    await screenshot(page, '02-about-only');
 
     await navigateOptions(page, 'settings-general');
     await page.locator('#settings-general [data-testid="default-translation-service-card"]').waitFor({state: 'visible', timeout});

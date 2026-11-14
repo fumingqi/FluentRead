@@ -65,7 +65,7 @@ async function main() {
     }
     for (const [width, height] of [[1440, 900], [1024, 700], [390, 720], [1440, 480]]) {
       await page.setViewportSize({width, height});
-      for (const section of ['settings-general', 'settings-services', 'settings-about']) {
+      for (const section of ['settings-general', 'settings-services', 'settings-data']) {
         await page.goto(`${origin}/options.html#${section}`, {waitUntil: 'domcontentloaded'});
         await page.locator(section === 'settings-services' ? '.service-catalog' : `#${section}`).waitFor({state: 'visible', timeout});
         for (const [query, expectation] of [['langu', 'single'], ['翻译', 'many'], ['no-such-setting-xyz', 'empty']]) {

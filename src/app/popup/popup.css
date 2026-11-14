@@ -352,30 +352,10 @@ footer button {
 .feature-card > i { width: 5px; height: 5px; justify-self: center; }
 .feature-card > b { justify-self: center; color: var(--muted); font-size: 12px; font-weight: 400; }
 .feature-card:disabled, .translate-button:disabled, select:disabled { cursor: not-allowed; opacity: .48; }
-footer { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 6px; margin-top: 8px; padding: 0 3px 1px; color: var(--muted); font-size: 9.5px; }
+footer { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; margin-top: 8px; padding: 0 3px 1px; color: var(--muted); font-size: 9.5px; }
 footer[data-popup-module-last="false"] { padding: 6px 8px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-soft); }
 footer > span { min-width: 0; }
 footer > button { justify-self: end; }
-.opensource-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-height: 22px;
-  padding: 2px 6px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 9.5px;
-  font-weight: 650;
-  text-decoration: none;
-  transition: color .18s ease, background-color .18s ease, border-color .18s ease;
-}
-.opensource-link:hover { color: var(--ink); background: color-mix(in srgb, var(--muted) 10%, var(--surface)); }
-.opensource-link { background: var(--surface-soft); white-space: nowrap; }
-.opensource-link:focus-visible { outline: 2px solid var(--muted); outline-offset: 2px; }
-.opensource-link svg { width: 12px; height: 12px; fill: currentColor; }
-.opensource-link .external-mark { color: inherit; font-size: 12px; line-height: 1; }
 
 .popup-drawer-modal { background: rgba(17, 20, 29, .48) !important; backdrop-filter: blur(2px); }
 /* 遮罩始终覆盖整页并拦截背景点击；只有内部抽屉跟随可见区域，根 popup 保持固有尺寸。 */
@@ -691,7 +671,7 @@ footer button { font-weight: 500; color: var(--muted); }
   line-height: 1.4;
 }
 :root:is(:lang(en), :lang(fr), :lang(ru), :lang(es)) .popup-shell footer {
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 8px;
 }
 :root:is(:lang(en), :lang(fr), :lang(ru), :lang(es)) .popup-shell .popup-translation-count { white-space: nowrap; }
@@ -700,10 +680,6 @@ footer button { font-weight: 500; color: var(--muted); }
   overflow: visible; white-space: normal; overflow-wrap: anywhere; text-overflow: clip; line-height: 1.4;
 }
 :root:not(:lang(zh)) .popup-shell[data-interface-skin] .translate-button { height: auto; min-height: 40px; padding-block: 7px; }
-
-:root:not(:lang(zh)) .popup-shell .opensource-link { min-width: 0; white-space: normal; text-align: center; line-height: 1.4; }
-:root:not(:lang(zh)) .popup-shell .opensource-link > span:not(.external-mark) { min-width: 0; overflow-wrap: anywhere; }
-.opensource-link svg, .opensource-link .external-mark { flex: none; }
 
 /* 公开 API 确认的独立标签页已有视口；原生、Android 与嵌入宿主继续使用各自的宽高契约。 */
 :root[data-fluentread-tab-popup]:not([data-fluentread-embedded-popup], [data-fluentread-android-popup], [data-fluentread-safari-touch-popup]),
@@ -833,7 +809,7 @@ footer button { font-weight: 500; color: var(--muted); }
     min-height: 46px;
     height: auto;
   }
-  :root .popup-shell[data-interface-skin] :is(.header-actions > button, .site-rule-button, footer > button, .opensource-link, .provider-summary),
+  :root .popup-shell[data-interface-skin] :is(.header-actions > button, .site-rule-button, footer > button, .provider-summary),
   :root .popup-drawer.popup-quick-drawer button,
   :root .popup-drawer.popup-services-drawer button {
     min-width: 46px;
@@ -898,7 +874,7 @@ footer button { font-weight: 500; color: var(--muted); }
   min-height: 46px;
   height: auto;
 }
-:root[data-fluentread-android-popup] .popup-shell[data-interface-skin] :is(.header-actions > button, .site-rule-button, footer > button, .opensource-link, .provider-summary),
+:root[data-fluentread-android-popup] .popup-shell[data-interface-skin] :is(.header-actions > button, .site-rule-button, footer > button, .provider-summary),
 :root[data-fluentread-android-popup] .popup-drawer.popup-quick-drawer button,
 :root[data-fluentread-android-popup] .popup-drawer.popup-services-drawer button {
   min-width: 46px;

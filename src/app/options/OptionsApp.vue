@@ -1,7 +1,7 @@
 <!--
  @file src/app/options/OptionsApp.vue
  文件职责：实现扩展 Options 页的顶层布局，组织设置导航、全局搜索结果和学习中心入口，并把选中分区交给对应 feature UI。
- 主要内容：页面名称由 main 辅助技术标签提供，内容直接从统一的紧凑页内导航或表单开始，不再渲染重复页面标题；侧栏展示品牌与多语言宣传语；关于页以随界面语言显示产品名的宽幅品牌介绍、项目链接卡片和开源项目下方的微信交流按钮组织内容，联系二维码在当前页弹窗展示；渲染默认展开的分组侧栏、窄屏分类选择和全局搜索，搜索只在同次派生内复用原始查询的小写值和语言入口判断，语言恢复查询优先展示现有软件语言入口并定位选择控件；普通设置连续展示并提供顶部滚动定位导航，统计保留任务视图切换，智能高亮锚点及搜索入口随脚本版能力隐藏，服务目录使用完整工作区，复用 settingsNavigation 的项目解析/过滤逻辑，在 SettingsSections 与 LearningCenter 之间切换并重置内容区滚动，通过当前导航 getter 向迟到学习面板提供可见性，同步 URL hash 的深链接与前进后退导航，URL 目标仅接受当前分区登记的具体设置或可用分类并复用已有滚动定位，兼容模型用量迁入翻译统计后的旧链接；界面根节点注册在卸载时只释放本页面句柄。
+ 主要内容：页面名称由 main 辅助技术标签提供，内容直接从统一的紧凑页内导航或表单开始，不再渲染重复页面标题；侧栏展示品牌与多语言宣传语；渲染默认展开的分组侧栏、窄屏分类选择和全局搜索，搜索只在同次派生内复用原始查询的小写值和语言入口判断，语言恢复查询优先展示现有软件语言入口并定位选择控件；普通设置连续展示并提供顶部滚动定位导航，统计保留任务视图切换，智能高亮锚点及搜索入口随脚本版能力隐藏，服务目录使用完整工作区，复用 settingsNavigation 的项目解析/过滤逻辑，在 SettingsSections 与 LearningCenter 之间切换并重置内容区滚动，通过当前导航 getter 向迟到学习面板提供可见性，同步 URL hash 的深链接与前进后退导航，URL 目标仅接受当前分区登记的具体设置或可用分类并复用已有滚动定位，兼容模型用量迁入翻译统计后的旧链接；界面根节点注册在卸载时只释放本页面句柄。
  模块边界：组件负责页面壳、导航状态和主题、界面皮肤根属性同步，不定义具体配置字段、不直接写 browser.storage，也不实现词汇仓库；设置表单、收藏与阅读记录业务由各 feature 组件拥有；学习栏目加载失败的重载动作在普通设置页保留栏目参数，页内设置只重载宿主文档。
 -->
 <template>
@@ -82,45 +82,6 @@
           <h2>{{ t('options.userscriptUnavailableTitle') }}</h2>
           <p>{{ t('options.userscriptUnavailableDescription') }}</p>
         </section>
-        <section v-else-if="activeSection === 'settings-about'" id="settings-about" class="about-page" :aria-label="t('options.aboutTitle')">
-          <header class="about-hero">
-            <div class="about-intro">
-              <div class="about-identity">
-                <img class="about-logo" :src="iconUrl" alt="" />
-                <div>
-                  <strong>{{ t('common.brand') }}</strong>
-                  <span class="about-version">V{{ version }} · {{ t('options.aboutHeroDescription') }}</span>
-                </div>
-              </div>
-              <h2 data-i18n-ignore>{{ t('brand.tagline') }}</h2>
-            </div>
-          </header>
-          <div class="about-grid">
-            <section class="about-panel about-links-panel" :aria-label="t('options.aboutLearnMore')">
-              <h3>{{ t('options.aboutLearnMore') }}</h3>
-              <p class="about-panel-description">{{ t('options.aboutLinksDescription') }}</p>
-              <div class="about-links">
-                <a v-for="link in aboutLinks" :key="link.label" :class="{ 'about-website': link.href === websiteUrl }" :href="link.href" target="_blank" rel="noopener noreferrer">
-                  <span class="about-link-icon"><UiIcon :name="link.icon" :size="23" /></span>
-                  <span class="about-link-copy"><strong>{{ t(link.label) }}</strong><small>{{ t(link.description) }}</small></span>
-                  <UiIcon name="external" :size="16" />
-                </a>
-                <button
-                  ref="wechatContactTrigger"
-                  class="about-wechat-contact"
-                  type="button"
-                  aria-haspopup="dialog"
-                  @click="openQrPreview()"
-                >
-                  <span class="about-link-icon"><UiIcon name="scan" :size="23" /></span>
-                  <span class="about-link-copy"><strong>{{ t('options.aboutWechatContact') }}</strong><small>{{ t('options.aboutWechatContactDescription') }}</small></span>
-                  <UiIcon name="arrow-right" :size="16" />
-                </button>
-              </div>
-            </section>
-          </div>
-
-        </section>
           <component
             v-else
             :is="activeSection === 'settings-vocabulary' ? LearningCenter : SettingsSections"
@@ -131,32 +92,12 @@
       </section>
 
     </main>
-    <el-dialog
-      v-model="qrPreviewVisible"
-      class="about-qr-dialog about-wechat-contact-dialog"
-      :title="t('options.aboutWechatContact')"
-      width="min(560px, calc(100vw - 32px))"
-      align-center
-      :close-on-click-modal="true"
-      :close-on-press-escape="true"
-      destroy-on-close
-      @closed="restoreQrPreviewFocus"
-    >
-      <img
-        class="about-qr-preview"
-        :src="qrPreviewUrl"
-        :alt="t('options.aboutWechatContactCodeAlt')"
-        width="888"
-        height="1131"
-      />
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import '@/src/features/settings/ui/components/settings-navigation.css'
 import UiIcon from '@/src/ui/components/UiIcon.vue'
-import {getContactImageUrl} from './aboutImages'
 import {SETTINGS_TABBED_SECTION_IDS, settingsPagePanels, resolveSettingsPanel, filterNavigationItems, filterSettingsSearchTargets, isUiLanguageSearch, settingsSearchTargets} from '@/src/features/settings/model/navigation';
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import SettingsNavigationIcon from '@/src/features/settings/ui/SettingsNavigationIcon.vue'
@@ -187,26 +128,8 @@ const props = defineProps<{
   onClose?: () => void
 }>()
 let disposed = false
-const version = process.env.VUE_APP_VERSION
 const websiteUrl = 'https://read.thinkstu.com'
 const iconUrl = globalThis.__FLUENTREAD_ICON_DATA__ || '/icon/128.png'
-const qrPreviewVisible = ref(false)
-const qrPreviewUrl = ref<string>()
-const wechatContactTrigger = ref<HTMLButtonElement | null>(null)
-function openQrPreview() {
-  qrPreviewUrl.value = getContactImageUrl()
-  qrPreviewVisible.value = true
-}
-function restoreQrPreviewFocus() {
-  if (disposed || activeSection.value !== 'settings-about') return
-  wechatContactTrigger.value?.focus({preventScroll: true})
-}
-const aboutLinks = [
-  {href: websiteUrl, icon: 'globe', label: 'options.aboutWebsite', description: 'options.aboutWebsiteDescription'},
-  {href: 'https://read.thinkstu.com/', icon: 'book', label: 'options.aboutDocs', description: 'options.aboutDocsDescription'},
-  {href: 'https://github.com/Bistutu/FluentRead', icon: 'card', label: 'options.aboutProject', description: 'options.aboutProjectDescription'},
-  {href: 'https://github.com/Bistutu/FluentRead/issues', icon: 'info', label: 'options.aboutFeedback', description: 'options.aboutFeedbackDescription'},
-]
 const {t, translateLegacy} = useUiI18n()
 const query = ref('')
 function sectionFromHash(hash: string): string {
@@ -479,7 +402,6 @@ async function revealActiveNavigation() {
 }
 
 watch(activeSection, () => {
-  qrPreviewVisible.value = false
   void revealActiveNavigation()
 })
 

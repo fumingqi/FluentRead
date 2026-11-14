@@ -2,12 +2,10 @@
  * @file src/features/settings/model/navigation.ts
  * 文件职责：定义设置中心侧边栏的导航信息模型，并提供默认分区、哈希解析与搜索过滤等不依赖 Vue 或浏览器 API 的纯规则。
  * 主要内容：完整句学习外观拥有界面风格独立分类与可直达锚点；包含按功能分组的标题、副标题、图标、关键词和 section ID，以及翻译设置内区分双语逐句阅读与智能高亮的独立锚点、同页分组、服务分配与模型用量深链接；旧圈选地址解析为图片页；通用页文案对应日常翻译、网页辅助与基本偏好的阅读顺序，从同一注册表派生导航列表与后台合法分区 ID，导出 resolveNavigationItem、resolveRequestedSection 与 filterNavigationItems。
- * 构建表示：完整静态导航组保持字面量，系统与数据组保留品牌来源引用；消费者仍读取同一完整注册表。
+ * 构建表示：完整静态导航组保持字面量，消费者仍读取同一完整注册表。
  * 请求配置搜索：将 AI 翻译超时、timeout 与慢模型等待关键词归入高级请求限制。
  * 模块边界：该模块只描述导航元数据，不切换 DOM、不写 location.hash 也不保存配置；Options 页面负责路由同步，SettingsSections.vue 负责各分区实际内容。
  */
-import brandTaglines from '@/src/core/i18n/messages/brand-taglines.json';
-
 export type NavigationItem = {
   id: string
   icon: string
@@ -184,12 +182,6 @@ export const navigationGroups = [
         heading: '备份与恢复 FluentRead', summary: '一次备份设置、单词本和模型用量，也可找回之前的设置',
         kicker: '系统与数据', title: '备份与恢复', detail: '导出或恢复设置、单词本和模型用量，并查看自动保存的设置历史',
         searchDescription: '备份、恢复、最近修改、自动设置快照、六小时、差异、迁移、单词本、模型用量、导出与导入',
-      },
-      {
-        id: 'settings-about', icon: 'i', label: '关于流畅阅读', description: '版本与项目', group: '系统与数据',
-        heading: '关于流畅阅读', summary: '查看插件版本、项目主页和反馈渠道',
-        kicker: '关于项目', title: '关于流畅阅读', detail: brandTaglines['zh-CN'],
-        searchDescription: '版本、开源项目、使用文档与问题反馈',
       },
     ],
   },

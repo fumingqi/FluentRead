@@ -254,11 +254,6 @@
   color: var(--muted);
 }
 
-:root[data-interface-skin-kind="palette"][data-interface-skin] .popup-shell .opensource-link {
-  color: var(--muted);
-  background: var(--skin-chip-background, var(--surface-soft));
-}
-
 :root[data-interface-skin-kind="palette"][data-interface-skin] .popup-drawer,
 :root[data-interface-skin-kind="palette"][data-interface-skin] .service-picker-panel {
   border-color: var(--line);

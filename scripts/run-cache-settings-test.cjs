@@ -29,7 +29,7 @@ const expectedNavigationIds = [
   'settings-general', 'settings-services', 'settings-translation', 'settings-interface',
   'settings-harness', 'settings-image-translation', 'settings-area-translation', 'settings-video',
   'settings-sites', 'settings-writing', 'settings-translation-center', 'settings-vocabulary',
-  'settings-glossary', 'settings-model-usage', 'settings-advanced', 'settings-data', 'settings-about',
+  'settings-glossary', 'settings-model-usage', 'settings-advanced', 'settings-data',
 ];
 assert.ok(playwrightRoot, 'Supply --playwright-root');
 assert.ok(helperPath && fs.existsSync(helperPath), 'Supply the skill --focus-safe-helper');

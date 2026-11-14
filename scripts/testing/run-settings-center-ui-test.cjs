@@ -83,13 +83,12 @@ const expectedNavigation = [
   ['settings-translation-stats', '翻译统计'],
   ['settings-advanced', '高级选项'],
   ['settings-data', '备份与恢复'],
-  ['settings-about', '关于流畅阅读'],
 ];
 const expectedNavigationGroups = [
   ['基础配置', ['settings-general', 'settings-services', 'settings-translation', 'settings-interface']],
   ['专项翻译', ['settings-selection', 'settings-image-translation', 'settings-video']],
   ['工具与学习', ['settings-writing', 'settings-translation-center', 'settings-vocabulary', 'settings-glossary', 'settings-sites', 'settings-translation-stats']],
-  ['系统与数据', ['settings-advanced', 'settings-data', 'settings-about']],
+  ['系统与数据', ['settings-advanced', 'settings-data']],
 ];
 const settingsNavigationSelector = 'nav[aria-label="设置分类"] button[data-section]';
 // 默认四项；用例显式添加译文显示后，完整皮肤矩阵必须保留全部五项。
@@ -1602,64 +1601,6 @@ async function main() {
         await recognitionHelp.press('Escape');
         await page.mouse.move(0, 0);
         report.assertions.independentAreaSettings = true;
-      }
-      if (id === 'settings-about') {
-        const contactTrigger = anchor.locator('.about-wechat-contact');
-        if (await contactTrigger.count() !== 1) {
-          throw new Error('关于页缺少微信联系方式入口');
-        }
-        if (await anchor.locator('.about-support-panel, .about-support-method').count() !== 0) {
-          throw new Error('关于页仍显示已删除的赞赏入口');
-        }
-        const pageCount = context.pages().length;
-        const aboutUrl = page.url();
-        const checkContactPreview = async () => {
-          const triggerSelector = '#settings-about .about-wechat-contact';
-          const preview = page.locator('.about-wechat-contact-dialog');
-          await page.locator(triggerSelector).click();
-          await preview.waitFor({state: 'visible', timeout});
-          const image = await preview.locator('img').evaluate(async image => {
-            await image.decode();
-            return {
-              src: image.currentSrc,
-              width: image.naturalWidth,
-              height: image.naturalHeight,
-              declaredWidth: image.getAttribute('width'),
-              declaredHeight: image.getAttribute('height'),
-            };
-          });
-          if (!image.src || image.width <= 0 || image.height <= 0
-            || image.declaredWidth !== '888' || image.declaredHeight !== '1131') {
-            throw new Error(`关于页联系二维码没有正确解码或尺寸异常：${JSON.stringify(image)}`);
-          }
-          if (context.pages().length !== pageCount || page.url() !== aboutUrl) {
-            throw new Error('点击联系码离开了关于页或打开了新标签页');
-          }
-          await page.keyboard.press('Escape');
-          await preview.waitFor({state: 'hidden', timeout});
-          await page.waitForFunction(selector => document.querySelector(selector) === document.activeElement, triggerSelector, {timeout});
-          return image;
-        };
-        const contactImage = await checkContactPreview();
-
-        await selectSettingsSection(page, 'settings-general');
-        await page.locator('#settings-general').waitFor({state: 'visible', timeout});
-        await anchor.waitFor({state: 'hidden', timeout});
-        if (await page.locator('.about-qr-dialog:visible').count() !== 0) throw new Error('离开关于页后仍显示二维码弹窗');
-        await button.click();
-        await anchor.waitFor({state: 'visible', timeout});
-        const returnedContactImage = await checkContactPreview();
-        if (returnedContactImage.src !== contactImage.src) {
-          throw new Error('返回关于页后联系码图片发生错误切换');
-        }
-        report.assertions.aboutQrRoundTrip = {contactImage, returnedContactImage};
-        if (await anchor.locator('.about-experience, .about-features, .about-feature').count() !== 0) {
-          throw new Error('关于页仍显示已删除的核心体验介绍');
-        }
-        if (await anchor.locator('.about-feature-list').count() !== 0) {
-          throw new Error('关于页仍显示已替换的核心体验列表');
-        }
-        report.assertions.aboutContactArea = true;
       }
       const workspace = page.locator('main.workspace');
       const pageTitle = (await workspace.getAttribute('aria-label'))?.trim();

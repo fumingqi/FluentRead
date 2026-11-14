@@ -13,7 +13,6 @@ import {createUserscriptFrancDataCompressionPlugin} from './francDataPlugin';
 import {francRuntimeBuildPlugin} from '../scripts/testing/franc-runtime-build';
 import {createUserscriptTldtsDataCompressionPlugin} from './tldtsDataPlugin';
 import {createUserscriptInlineCssCompressionPlugin} from './inlineCssPlugin';
-import {createUserscriptAboutImagesCompressionPlugin} from './aboutImagesPlugin';
 import {createUserscriptServiceBrandIconsCompressionPlugin} from './serviceBrandIconsPlugin';
 import {createUserscriptSettingsDataPlugin} from './settingsDataPlugin';
 import {createUserscriptTranslationCenterPlugin} from './translationCenterPlugin';
@@ -439,7 +438,8 @@ type BrowserGlobal = 'browser' | 'chrome';
 export function findFreeBrowserGlobals(code: string, id: string): BrowserGlobal[] {
     // 没有候选时不建立编译器 program；反斜杠保留 Unicode 转义标识符的完整解析路径。
     if (!code.includes('browser') && !code.includes('chrome') && !code.includes('\\')) return [];
-    const sourceFile = ts.createSourceFile(id, code, ts.ScriptTarget.Latest, true);
+    const normalizedId = normalizePath(id);
+    const sourceFile = ts.createSourceFile(normalizedId, code, ts.ScriptTarget.Latest, true);
     const options: ts.CompilerOptions = {
         allowJs: true,
         module: ts.ModuleKind.ESNext,
@@ -448,17 +448,17 @@ export function findFreeBrowserGlobals(code: string, id: string): BrowserGlobal[
         target: ts.ScriptTarget.Latest,
     };
     const host: ts.CompilerHost = {
-        fileExists: (fileName) => fileName === id,
-        getCanonicalFileName: (fileName) => fileName,
+        fileExists: (fileName) => normalizePath(fileName) === normalizedId,
+        getCanonicalFileName: (fileName) => normalizePath(fileName),
         getCurrentDirectory: () => root,
         getDefaultLibFileName: () => '',
         getNewLine: () => '\n',
-        getSourceFile: (fileName) => fileName === id ? sourceFile : undefined,
-        readFile: (fileName) => fileName === id ? code : undefined,
+        getSourceFile: (fileName) => normalizePath(fileName) === normalizedId ? sourceFile : undefined,
+        readFile: (fileName) => normalizePath(fileName) === normalizedId ? code : undefined,
         useCaseSensitiveFileNames: () => true,
         writeFile: () => undefined,
     };
-    const checker = ts.createProgram([id], options, host).getTypeChecker();
+    const checker = ts.createProgram([normalizedId], options, host).getTypeChecker();
     const found = new Set<BrowserGlobal>();
     const visit = (node: ts.Node): void => {
         if (ts.isIdentifier(node) && (node.text === 'browser' || node.text === 'chrome')) {
@@ -690,7 +690,7 @@ export const userscriptAliases = [
 export default defineConfig({
     root,
     publicDir: false,
-    plugins: [...(!greasyForkSource ? [createStandaloneOpenAITransportPlugin()] : []), createUserscriptTranslationCenterPlugin(root), createUserscriptSettingsDataPlugin(root, !greasyForkSource, bundleLibraries, bundleLibraries), createDeepLXRuntimeBuildPlugin(root), francRuntimeBuildPlugin(), unwrapWxtEntrypoints(), createUserscriptCatalogCompressionPlugin(), createUserscriptCharacterDataCompressionPlugin(root, !greasyForkSource, bundleLibraries), createUserscriptFrancDataCompressionPlugin(root, !greasyForkSource, !greasyForkSource, bundleLibraries), createUserscriptTldtsDataCompressionPlugin(root, bundleLibraries && !greasyForkSource, bundleLibraries && !greasyForkSource, bundleLibraries && !greasyForkSource), createUserscriptAboutImagesCompressionPlugin(root, bundleLibraries && !greasyForkSource, bundleLibraries), createUserscriptServiceBrandIconsCompressionPlugin(root, bundleLibraries && !greasyForkSource, bundleLibraries), injectUserscriptBrowserShim(), vue(), bundleUserscriptCss(), createUserscriptInlineCssCompressionPlugin(root, !greasyForkSource, bundleLibraries)],
+    plugins: [...(!greasyForkSource ? [createStandaloneOpenAITransportPlugin()] : []), createUserscriptTranslationCenterPlugin(root), createUserscriptSettingsDataPlugin(root, !greasyForkSource, bundleLibraries, bundleLibraries), createDeepLXRuntimeBuildPlugin(root), francRuntimeBuildPlugin(), unwrapWxtEntrypoints(), createUserscriptCatalogCompressionPlugin(), createUserscriptCharacterDataCompressionPlugin(root, !greasyForkSource, bundleLibraries), createUserscriptFrancDataCompressionPlugin(root, !greasyForkSource, !greasyForkSource, bundleLibraries), createUserscriptTldtsDataCompressionPlugin(root, bundleLibraries && !greasyForkSource, bundleLibraries && !greasyForkSource, bundleLibraries && !greasyForkSource), createUserscriptServiceBrandIconsCompressionPlugin(root, bundleLibraries && !greasyForkSource, bundleLibraries), injectUserscriptBrowserShim(), vue(), bundleUserscriptCss(), createUserscriptInlineCssCompressionPlugin(root, !greasyForkSource, bundleLibraries)],
     resolve: {
         alias: userscriptAliases,
     },

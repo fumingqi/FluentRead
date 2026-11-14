@@ -133,10 +133,6 @@
           data-preview-popup-module="footer"
         >
           <span aria-hidden="true">{{ t('popup.translationCount', {count: 0}) }}</span>
-          <span class="preview-open-source" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.26c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.5.99.11-.77.42-1.3.76-1.6-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.17 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.24 2.87.12 3.17.77.84 1.24 1.91 1.24 3.22 0 4.62-2.81 5.65-5.49 5.95.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.83.57A12 12 0 0 0 12 .3" /></svg>
-            {{ t('popup.openSourceProject') }} ↗
-          </span>
           <span class="preview-clear-cache" aria-hidden="true">{{ t('popup.clearCache') }}</span>
         </PopupLayoutPreviewItem>
       </template>
@@ -339,15 +335,10 @@ const featureStatus = (id: string) => isQuickFeatureId(id) ? sampleStatus[id] : 
 .preview-feature-status.active { background: #24b47e; box-shadow: 0 0 0 4px rgba(36, 180, 126, .12); }
 
 .preview-footer {
-  display: grid; min-height: 30px; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 6px;
+  display: grid; min-height: 30px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px;
   padding: 6px 3px 1px; border-top: 1px solid var(--line); color: var(--muted); font-size: 9.5px;
 }
 .preview-footer.framed { padding: 6px 8px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-soft); }
-.preview-open-source {
-  display: inline-flex; min-height: 22px; align-items: center; gap: 4px; padding: 2px 6px; border: 1px solid transparent;
-  border-radius: 999px; background: var(--surface-soft); font-weight: 650; white-space: nowrap;
-}
-.preview-open-source svg { width: 12px; height: 12px; flex: none; }
 .preview-clear-cache { justify-self: end; font-size: 10px; font-weight: 500; }
 
 /* 布局编辑：在真实界面上叠加排序手柄与入口切换，不改变各区域自身的样子。 */
@@ -385,7 +376,6 @@ const featureStatus = (id: string) => isQuickFeatureId(id) ? sampleStatus[id] : 
 .preview-popup[data-preview-kind="minimal"] .preview-feature > b { font-size: 15px; }
 .preview-popup[data-preview-kind="minimal"] .preview-footer { min-height: 32px; padding: 7px 14px; border: 0; background: var(--surface-soft); font-size: 10px; }
 .preview-popup[data-preview-kind="minimal"] .preview-footer:not(.framed) { margin: 0 -12px -10px; }
-.preview-popup[data-preview-kind="minimal"] .preview-open-source { min-height: 20px; padding: 1px 4px; border-radius: 6px; }
 
 /* 紧凑：对应 compact.css——压缩间距与控件高度，文字不缩到难以辨认。 */
 .preview-popup[data-preview-kind="compact"] {
@@ -468,5 +458,4 @@ const featureStatus = (id: string) => isQuickFeatureId(id) ? sampleStatus[id] : 
   color: var(--skin-icon-color, var(--brand-strong)); background: var(--skin-icon-background, var(--brand-soft)); box-shadow: var(--skin-icon-shadow, none);
 }
 .preview-popup[data-preview-kind="palette"] .preview-footer { border-color: var(--skin-footer-line, var(--line)); color: var(--muted); }
-.preview-popup[data-preview-kind="palette"] .preview-open-source { background: var(--skin-chip-background, var(--surface-soft)); }
 </style>

@@ -36,7 +36,7 @@ node scripts/run-selection-trigger-test.cjs --context-menu-only \
 
 生产包构建后运行 `node scripts/testing/run-settings-viewport-ui-test.cjs --extension-dir .output/chrome-mv3 --playwright-root <Node包目录> --focus-safe-helper <focus-safe-browser.cjs路径> --artifacts-dir /private/tmp/fluentread-settings-viewport`。脚本通过临时 Edge profile 和后台可见窗口验证首次打开、全部菜单、搜索与下拉菜单、原生锚点滚动、通用/视频长表单底部、刷新深链接、窄屏、矮窗口及深色主题。报告保存页面高度、文档/容器滚动位置、截图、焦点隔离信息和控制台异常。Firefox 构建通过不等于 Firefox 实机验证；完整 UI 套件单独执行并报告。
 
-搜索结果面板位于页内导航与设置内容之间，高度随结果数量变化，超过上限后在面板内滚动，宽度与导航和内容同列。运行 `node scripts/testing/run-settings-search-results-layout-test.cjs --extension-dir .output/chrome-mv3 --playwright-root <Node包目录> --focus-safe-helper <focus-safe-browser.cjs路径> --artifacts-dir /private/tmp/fluentread-settings-search-results-layout`，在通用设置、翻译服务和关于页分别搜索单条、多条和无结果的关键词，覆盖 1440×900、1024×700、390×720 与 1440×480，检查面板内容完整、不挤占设置内容并保持对齐。
+搜索结果面板位于页内导航与设置内容之间，高度随结果数量变化，超过上限后在面板内滚动，宽度与导航和内容同列。运行 `node scripts/testing/run-settings-search-results-layout-test.cjs --extension-dir .output/chrome-mv3 --playwright-root <Node包目录> --focus-safe-helper <focus-safe-browser.cjs路径> --artifacts-dir /private/tmp/fluentread-settings-search-results-layout`，在通用设置、翻译服务和备份与恢复页分别搜索单条、多条和无结果的关键词，覆盖 1440×900、1024×700、390×720 与 1440×480，检查面板内容完整、不挤占设置内容并保持对齐。
 
 ## 统一下拉选择器
 
